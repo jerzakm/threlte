@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { initPathTracingCommons } from '$lib/pathTracingCommons';
-	import { useThrelte } from '@threlte/core';
+	import { useThrelte, T } from '@threlte/core';
 	import * as THREE from 'three';
 	import { default as commonPathTracingVertex } from '$lib/pathTracingShaders/common_PathTracing_Vertex.glsl?raw';
 	import { default as scenePathTracingShader } from './MultiSPF_Dynamic_Scene_Fragment.glsl?raw';
+	import type { Scene } from 'three';
 
 	initPathTracingCommons();
 
@@ -11,7 +12,10 @@
 	let SCREEN_HEIGHT;
 	let context;
 	let controls;
-	let pathTracingScene, screenCopyScene, screenOutputScene;
+
+	let pathTracingScene: Scene;
+	let screenCopyScene: Scene;
+	let screenOutputScene: Scene;
 	let pathTracingUniforms = {};
 	let pathTracingUniformsGroups = [];
 	let screenCopyUniforms, screenOutputUniforms;
@@ -343,10 +347,6 @@
 		context.getExtension('EXT_color_buffer_float');
 
 		clock = new THREE.Clock();
-
-		pathTracingScene = new THREE.Scene();
-		screenCopyScene = new THREE.Scene();
-		screenOutputScene = new THREE.Scene();
 
 		// quadCamera is simply the camera to help render the full screen quad (2 triangles),
 		// hence the name.  It is an Orthographic camera that sits facing the view plane, which serves as
@@ -750,8 +750,12 @@
 	} // end function updateUniforms()
 
 	$: {
-		if (renderer) {
+		if (renderer && screenOutputScene) {
 			init(); // init app and start animating
 		}
 	}
 </script>
+
+<T.Scene bind:ref={pathTracingScene} />
+<T.Scene bind:ref={screenCopyScene} />
+<T.Scene bind:ref={screenOutputScene} />
