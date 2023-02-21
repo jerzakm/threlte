@@ -3,6 +3,8 @@
 	import { useThrelte, T } from '@threlte/core';
 	import * as THREE from 'three';
 	import { default as commonPathTracingVertex } from '$lib/pathTracingShaders/common_PathTracing_Vertex.glsl?raw';
+	import { default as ScreenCopy_Fragment } from '$lib/pathTracingShaders/ScreenCopy_Fragment.glsl?raw';
+	import { default as ScreenOutput_Fragment } from '$lib/pathTracingShaders/ScreenOutput_Fragment.glsl?raw';
 	import { default as scenePathTracingShader } from './MultiSPF_Dynamic_Scene_Fragment.glsl?raw';
 	import type { Scene } from 'three';
 
@@ -478,20 +480,16 @@
 			tPathTracedImageTexture: { type: 't', value: pathTracingRenderTarget.texture }
 		};
 
-		fileLoader.load('shaders/ScreenCopy_Fragment.glsl', function (shaderText) {
-			screenCopyFragmentShader = shaderText;
-
-			screenCopyMaterial = new THREE.ShaderMaterial({
-				uniforms: screenCopyUniforms,
-				vertexShader: pathTracingVertexShader,
-				fragmentShader: screenCopyFragmentShader,
-				depthWrite: false,
-				depthTest: false
-			});
-
-			screenCopyMesh = new THREE.Mesh(screenCopyGeometry, screenCopyMaterial);
-			screenCopyScene.add(screenCopyMesh);
+		screenCopyMaterial = new THREE.ShaderMaterial({
+			uniforms: screenCopyUniforms,
+			vertexShader: pathTracingVertexShader,
+			fragmentShader: ScreenCopy_Fragment,
+			depthWrite: false,
+			depthTest: false
 		});
+
+		screenCopyMesh = new THREE.Mesh(screenCopyGeometry, screenCopyMaterial);
+		screenCopyScene.add(screenCopyMesh);
 
 		// this full-screen quad mesh takes the image output of the path tracing shader (which is a continuous blend of the previous frame and current frame),
 		// and applies gamma correction (which brightens the entire image), and then displays the final accumulated rendering to the screen
@@ -508,20 +506,16 @@
 			uUseToneMapping: { type: 'b1', value: useToneMapping }
 		};
 
-		fileLoader.load('shaders/ScreenOutput_Fragment.glsl', function (shaderText) {
-			screenOutputFragmentShader = shaderText;
-
-			screenOutputMaterial = new THREE.ShaderMaterial({
-				uniforms: screenOutputUniforms,
-				vertexShader: pathTracingVertexShader,
-				fragmentShader: screenOutputFragmentShader,
-				depthWrite: false,
-				depthTest: false
-			});
-
-			screenOutputMesh = new THREE.Mesh(screenOutputGeometry, screenOutputMaterial);
-			screenOutputScene.add(screenOutputMesh);
+		screenOutputMaterial = new THREE.ShaderMaterial({
+			uniforms: screenOutputUniforms,
+			vertexShader: pathTracingVertexShader,
+			fragmentShader: ScreenOutput_Fragment,
+			depthWrite: false,
+			depthTest: false
 		});
+
+		screenOutputMesh = new THREE.Mesh(screenOutputGeometry, screenOutputMaterial);
+		screenOutputScene.add(screenOutputMesh);
 
 		// this 'jumpstarts' the initial dimensions and parameters for the window and renderer
 		onWindowResize();
@@ -708,7 +702,7 @@
 		cameraFlightSpeed = 60;
 
 		// pixelRatio is resolution - range: 0.5(half resolution) to 1.0(full resolution)
-		pixelRatio = 1;
+		pixelRatio = 0.8;
 
 		EPS_intersect = 0.1;
 
