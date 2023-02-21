@@ -21,6 +21,9 @@
     "build:docs-next": {
       "cache": false
     },
+    "build:pathtracing": {
+      "cache": false
+    },
     "preview": {
       "cache": false
     },
