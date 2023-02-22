@@ -5,8 +5,11 @@
 		ChromaticAberrationEffect,
 		EffectComposer,
 		EffectPass,
+		GaussianBlurPass,
 		KernelSize,
-		RenderPass
+		RenderPass,
+		SMAAEffect,
+		SMAAPreset
 	} from 'postprocessing';
 	import { onDestroy } from 'svelte';
 	import { Vector2 } from 'three';
@@ -14,7 +17,7 @@
 
 	const ctx = useThrelte();
 
-	const { arcadeMachineScene } = gameState;
+	const { outputCamera, screenOutputScene } = sharedState;
 	const { camera, renderer } = ctx;
 
 	let bloomEffect: BloomEffect | undefined = undefined;
@@ -28,8 +31,8 @@
 		composer.removeAllPasses();
 
 		bloomEffect = new BloomEffect({
-			intensity: 1,
-			luminanceThreshold: 0.15,
+			intensity: 8,
+			luminanceThreshold: 0.75,
 			height: 512,
 			width: 512,
 			luminanceSmoothing: 0.08,
@@ -37,13 +40,26 @@
 			kernelSize: KernelSize.MEDIUM
 		});
 		bloomEffect.luminancePass.enabled = true;
-		(bloomEffect as any).ignoreBackground = true;
-		composer.addPass(new RenderPass($arcadeMachineScene, $camera));
+		// (bloomEffect as any).ignoreBackground = true;
+
+		composer.addPass(new RenderPass($screenOutputScene, $outputCamera));
+		composer.addPass(new RenderPass($screenOutputScene, $outputCamera));
+
+		composer.addPass(new EffectPass($camera, bloomEffect));
+		// composer.addPass(
+		// 	new GaussianBlurPass({
+		// 		iterations: 3,
+		// 		kernelSize: 8,
+		// 		resolutionScale: 1,
+		// 		resolutionX: window.innerWidth,
+		// 		resolutionY: window.innerHeight
+		// 	})
+		// );
 		composer.addPass(
 			new EffectPass(
 				$camera,
 				new ChromaticAberrationEffect({
-					offset: new Vector2(0.0, 0.0),
+					offset: new Vector2(0.001, 0.001),
 					modulationOffset: 0,
 					radialModulation: false
 				})
@@ -51,7 +67,8 @@
 		);
 	};
 
-	$: if (renderer && $camera && $arcadeMachineScene) {
+	$: if (renderer && $camera && $screenOutputScene) {
+		console.log('adding passes');
 		addComposerAndPasses();
 	}
 	onDestroy(() => {

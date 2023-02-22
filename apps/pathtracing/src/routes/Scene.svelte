@@ -6,7 +6,7 @@
 	import { default as ScreenCopy_Fragment } from '$lib/pathTracingShaders/ScreenCopy_Fragment.glsl?raw';
 	import { default as ScreenOutput_Fragment } from '$lib/pathTracingShaders/ScreenOutput_Fragment.glsl?raw';
 	import { default as scenePathTracingShader } from './MultiSPF_Dynamic_Scene_Fragment.glsl?raw';
-	import type { OrthographicCamera, PerspectiveCamera, Scene } from 'three';
+	import { Vector2, type OrthographicCamera, type PerspectiveCamera, type Scene } from 'three';
 
 	import { sharedState } from './state';
 	import { useKeyboardControls } from 'svelte-kbc';
@@ -15,9 +15,13 @@
 
 	const { w, a, s, d, shift, space } = useKeyboardControls();
 
-	const { sceneInitiated, pathTracingScene, screenCopyScene, screenOutputScene } = sharedState;
+	const { sceneInitiated, pathTracingScene, screenCopyScene, screenOutputScene, outputCamera } =
+		sharedState;
 
 	initPathTracingCommons();
+	const PIXEL_RATIO = 0.75;
+	const SAMPLES_PER_FRAME = 8;
+	const BLEND_WEIGHT = 0.7;
 
 	let SCREEN_WIDTH;
 	let SCREEN_HEIGHT;
@@ -43,7 +47,6 @@
 
 	let apertureSize = 0.0;
 	let focusDistance = 132.0;
-	let pixelRatio = 0.5;
 	let TWO_PI = Math.PI * 2;
 	let sampleCounter = 0.0; // will get increased by 1 in animation loop before rendering
 	let frameCounter = 1.0; // 1 instead of 0 because it is used as a rng() seed in pathtracing shader
@@ -139,20 +142,26 @@
 		event.stopPropagation();
 	}
 
+	const { renderer, composer } = useThrelte();
+
 	function onWindowResize(event) {
 		// the following change to document.body.clientWidth and Height works better for mobile, especially iOS
 		// suggestion from Github user q750831855  - Thank you!
 		SCREEN_WIDTH = window.innerWidth;
 		SCREEN_HEIGHT = window.innerHeight;
 
-		renderer.setPixelRatio(pixelRatio);
-		renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+		// renderer?.setPixelRatio(PIXEL_RATIO);
+		// renderer?.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+		composer?.renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+		composer?.renderer.setPixelRatio(PIXEL_RATIO);
 
-		pathTracingUniforms.uResolution.value.x = context.drawingBufferWidth;
-		pathTracingUniforms.uResolution.value.y = context.drawingBufferHeight;
+		console.log(composer?.renderer.getSize(new Vector2()));
 
-		pathTracingRenderTarget.setSize(context.drawingBufferWidth, context.drawingBufferHeight);
-		screenCopyRenderTarget.setSize(context.drawingBufferWidth, context.drawingBufferHeight);
+		pathTracingUniforms.uResolution.value.x = SCREEN_WIDTH;
+		pathTracingUniforms.uResolution.value.y = SCREEN_HEIGHT;
+
+		pathTracingRenderTarget.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+		screenCopyRenderTarget.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 
 		worldCamera.aspect = SCREEN_WIDTH / SCREEN_HEIGHT;
 		// the following is normally used with traditional rasterized rendering, but it is not needed for our fragment shader raytraced rendering
@@ -165,8 +174,6 @@
 		pathTracingUniforms.uVLen.value = Math.tan(fovScale);
 		pathTracingUniforms.uULen.value = pathTracingUniforms.uVLen.value * worldCamera.aspect;
 	} // end function onWindowResize( event )
-
-	const { renderer } = useThrelte();
 
 	function init() {
 		if (mouseControl) {
@@ -455,8 +462,8 @@
 		// STEP 3
 		// Render full screen quad with generated pathTracingRenderTarget in STEP 1 above.
 		// After applying tonemapping and gamma-correction to the image, it will be shown on the screen as the final accumulated output
-		renderer.setRenderTarget(null);
-		renderer.render($screenOutputScene, quadCamera);
+		// renderer.setRenderTarget(null);
+		// renderer.render($screenOutputScene, quadCamera);
 	} // end function animate()
 
 	// scene/demo-specific variables go here
@@ -471,9 +478,6 @@
 		sceneIsDynamic = true;
 
 		cameraFlightSpeed = 60;
-
-		// pixelRatio is resolution - range: 0.5(half resolution) to 1.0(full resolution)
-		pixelRatio = 0.75;
 
 		EPS_intersect = 0.1;
 
@@ -491,9 +495,10 @@
 		// position and orient camera
 		cameraControlsObject.position.set(0, 20, 120);
 		// scene/demo-specific uniforms go here
+
 		pathTracingUniforms.uTorusInvMatrix = { value: new THREE.Matrix4() };
-		pathTracingUniforms.uSamplesPerFrame = { value: 12 };
-		pathTracingUniforms.uPreviousFrameBlendWeight = { value: 0.7 };
+		pathTracingUniforms.uSamplesPerFrame = { value: SAMPLES_PER_FRAME };
+		pathTracingUniforms.uPreviousFrameBlendWeight = { value: BLEND_WEIGHT };
 	}
 
 	function updateVariablesAndUniforms() {
@@ -510,11 +515,13 @@
 	$: {
 		if (renderer && $screenOutputScene) {
 			init(); // init app and start animating
+			outputCamera.set(quadCamera);
 		}
 	}
 
 	useFrame(() => {
 		// everything is set up, now we can start animating
+
 		if ($sceneInitiated) {
 			animate();
 		}
@@ -555,7 +562,7 @@
 </T.Scene>
 
 <T.Scene bind:ref={$screenOutputScene}>
-	<T.Mesh>
+	<T.Mesh position.x={10}>
 		<T.ShaderMaterial
 			uniforms={screenOutputUniforms}
 			vertexShader={commonPathTracingVertex}
@@ -563,6 +570,6 @@
 			depthTest={false}
 			depthWrite={false}
 		/>
-		<T.PlaneGeometry args={[window.innerWidth, window.innerHeight]} />
+		<T.PlaneGeometry args={[2, 2]} />
 	</T.Mesh>
 </T.Scene>

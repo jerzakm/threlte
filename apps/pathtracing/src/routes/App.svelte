@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Canvas, useFrame, useThrelte } from '@threlte/core';
 	import { KeyboardControls, wasdConfig } from 'svelte-kbc';
+	import Postprocessing from './Postprocessing.svelte';
 	import Scene from './Scene.svelte';
 </script>
 
@@ -15,5 +16,6 @@
 		}}
 	>
 		<Scene />
+		<Postprocessing />
 	</Canvas>
 </KeyboardControls>
