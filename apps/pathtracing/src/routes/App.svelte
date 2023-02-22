@@ -16,6 +16,8 @@
 			stencil: false,
 			depth: false
 		}}
+		flat
+		linear
 	>
 		<CameraControls />
 		<PathTracingCore>

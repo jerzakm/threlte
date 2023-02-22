@@ -22,17 +22,18 @@
 		bloomEffect = new BloomEffect({
 			intensity: 8,
 			luminanceThreshold: 0.75,
-			height: 512,
-			width: 512,
-			luminanceSmoothing: 0.08,
+			height: 1024,
+			width: 1024,
+			luminanceSmoothing: 0.01,
 			mipmapBlur: true,
 			kernelSize: KernelSize.MEDIUM
 		});
 		bloomEffect.luminancePass.enabled = true;
 
 		composer.addPass(new RenderPass($screenOutputScene, $outputCamera));
+		composer.addPass(new RenderPass($screenOutputScene, $outputCamera));
 
-		composer.addPass(new EffectPass($camera, bloomEffect));
+		// composer.addPass(new EffectPass($camera, bloomEffect));
 	};
 
 	$: if (renderer && $camera && $screenOutputScene) {

@@ -8,6 +8,12 @@ uniform mat4 uTorusInvMatrix;
 uniform float uSamplesPerFrame;
 uniform float uPreviousFrameBlendWeight;
 
+uniform vec3 minCorner;
+uniform vec3 maxCorner;
+uniform vec3 emission;
+uniform vec3 color;
+uniform int type;
+
 #define N_LIGHTS 3.0
 #define N_SPHERES 6
 #define N_PLANES 1
@@ -150,6 +156,20 @@ float SceneIntersect(out int finalIsRayExiting)
   int insideSphere = FALSE;
   int objectCount = 0;
 
+  for(int i = 0; i < 1; i++) {
+    d = BoxIntersect(minCorner, maxCorner, rayOrigin, rayDirection, n, isRayExiting);
+    if(d < t) {
+      t = d;
+      hitNormal = n;
+      hitEmission = emission;
+      hitColor = color;
+      hitType = 1;
+      finalIsRayExiting = isRayExiting;
+      hitObjectID = float(objectCount);
+    }
+    objectCount++;
+  }
+
   for(int i = 0; i < N_SPHERES; i++) {
     d = SphereIntersect(spheres[i].radius, spheres[i].position, rayOrigin, rayDirection);
     if(d < t) {
@@ -243,26 +263,6 @@ float SceneIntersect(out int finalIsRayExiting)
     hitObjectID = float(objectCount);
   }
   objectCount++;
-
-	// transform ray into Torus's object space
-  rObjOrigin = vec3(uTorusInvMatrix * vec4(rayOrigin, 1.0));
-  rObjDirection = vec3(uTorusInvMatrix * vec4(rayDirection, 0.0));
-	// first check that the ray hits the bounding sphere around the torus
-  d = UnitBoundingSphereIntersect(rObjOrigin, rObjDirection, insideSphere);
-  if(d < INFINITY) {	// if outside the sphere, move the ray up close to the Torus, for numerical stability
-    d = insideSphere == TRUE ? 0.0 : d;
-    rObjOrigin += rObjDirection * d;
-
-    dt = d + UnitTorusIntersect(rObjOrigin, rObjDirection, torii[0].parameterK, n);
-    if(dt < t) {
-      t = dt;
-      hitNormal = transpose(mat3(uTorusInvMatrix)) * n;
-      hitEmission = torii[0].emission;
-      hitColor = torii[0].color;
-      hitType = torii[0].type;
-      hitObjectID = float(objectCount);
-    }
-  }
 
   return t;
 
@@ -485,7 +485,7 @@ void SetupScene(void)
 //-----------------------------------------------------------------------
 {
   vec3 z = vec3(0);
-  vec3 L1 = vec3(1.0, 1.0, 1.0) * 5.0;//13.0;// White light
+  vec3 L1 = vec3(1.0, 1.0, 1.0) * 13.0;//13.0;// White light
   vec3 L2 = vec3(1.0, 0.8, 0.2) * 4.0;//10.0;// Yellow light
   vec3 L3 = vec3(0.1, 0.7, 1.0) * 2.0;//5.0; // Blue light
 
@@ -493,26 +493,26 @@ void SetupScene(void)
   spheres[1] = Sphere(100.0, vec3(300, 400, -300), L2, z, LIGHT);//spherical yellow Light2
   spheres[2] = Sphere(50.0, vec3(500, 250, -100), L3, z, LIGHT);//spherical blue Light3
 
-  spheres[3] = Sphere(1000.0, vec3(0.0, 1000.0, 0.0), z, vec3(1.0, 1.0, 1.0), CHECK);//Checkered Floor
+  spheres[3] = Sphere(4000.0, vec3(0.0, 1000.0, 0.0), vec3(1.0, 1.0, 1.0), vec3(0.5, 0.5, 1.0), DIFF);//Checkered Floor
   spheres[4] = Sphere(16.5, vec3(-26.0, 17.2, 5.0), z, vec3(0.95, 0.95, 0.95), SPEC);//Mirror sphere
   spheres[5] = Sphere(15.0, vec3(sin(mod(uTime * 0.3, TWO_PI)) * 80.0, 25, cos(mod(uTime * 0.1, TWO_PI)) * 80.0), z, vec3(1.0, 1.0, 1.0), REFR);//Glass sphere
 
-  ellipsoids[0] = Ellipsoid(vec3(30, 40, 16), vec3(cos(mod(uTime * 0.5, TWO_PI)) * 80.0, 5, -30), z, vec3(1.0, 0.765557, 0.336057), SPEC);//metallic gold ellipsoid
+  // ellipsoids[0] = Ellipsoid(vec3(30, 40, 16), vec3(cos(mod(uTime * 0.5, TWO_PI)) * 80.0, 5, -30), z, vec3(1.0, 0.765557, 0.336057), SPEC);//metallic gold ellipsoid
 
-  paraboloids[0] = Paraboloid(16.5, 50.0, vec3(20, 1, -50), z, vec3(1.0, 0.2, 0.7), REFR);//paraboloid
+  // paraboloids[0] = Paraboloid(16.5, 50.0, vec3(20, 1, -50), z, vec3(1.0, 0.2, 0.7), REFR);//paraboloid
 
-  openCylinders[0] = OpenCylinder(15.0, 30.0, vec3(cos(mod(uTime * 0.1, TWO_PI)) * 100.0, 10, sin(mod(uTime * 0.4, TWO_PI)) * 100.0), z, vec3(0.9, 0.01, 0.01), REFR);//red glass open Cylinder
+  // openCylinders[0] = OpenCylinder(15.0, 30.0, vec3(cos(mod(uTime * 0.1, TWO_PI)) * 100.0, 10, sin(mod(uTime * 0.4, TWO_PI)) * 100.0), z, vec3(0.9, 0.01, 0.01), REFR);//red glass open Cylinder
 
-  cappedCylinders[0] = CappedCylinder(14.0, vec3(-60, 0, 20), vec3(-60, 14, 20), z, vec3(0.05, 0.05, 0.05), COAT);//dark gray capped Cylinder
+  // cappedCylinders[0] = CappedCylinder(14.0, vec3(-60, 0, 20), vec3(-60, 14, 20), z, vec3(0.05, 0.05, 0.05), COAT);//dark gray capped Cylinder
 
-  cones[0] = Cone(vec3(1, 20, -12), 15.0, vec3(1, 0, -12), 0.0, z, vec3(0.01, 0.1, 0.5), REFR);//blue Cone
+  // cones[0] = Cone(vec3(1, 20, -12), 15.0, vec3(1, 0, -12), 0.0, z, vec3(0.01, 0.1, 0.5), REFR);//blue Cone
 
-  capsules[0] = Capsule(vec3(80, 13, 15), 10.0, vec3(110, 15.8, 15), 10.0, z, vec3(1.0, 1.0, 1.0), COAT);//white Capsule
+  // capsules[0] = Capsule(vec3(80, 13, 15), 10.0, vec3(110, 15.8, 15), 10.0, z, vec3(1.0, 1.0, 1.0), COAT);//white Capsule
 
-  torii[0] = UnitTorus(0.75, z, vec3(0.955008, 0.637427, 0.538163), SPEC);//copper Torus
+  // torii[0] = UnitTorus(0.75, z, vec3(0.955008, 0.637427, 0.538163), SPEC);//copper Torus
 
-  boxes[0] = Box(vec3(50.0, 21.0, -60.0), vec3(100.0, 28.0, -130.0), z, vec3(0.2, 0.9, 0.7), REFR);//Glass Box
-  boxes[1] = Box(vec3(56.0, 23.0, -66.0), vec3(94.0, 26.0, -124.0), z, vec3(0.0, 0.0, 0.0), DIFF);//Diffuse Box
+  boxes[0] = Box(vec3(-100.0, 3, -200.0), vec3(100.0, 3, 200.0), z, vec3(0.5), DIFF);//Glass Box
+  // boxes[1] = Box(vec3(56.0, 23.0, -66.0), vec3(94.0, 26.0, -124.0), z, vec3(0.0, 0.0, 0.0), DIFF);//Diffuse Box
 }
 
 //#include <pathtracing_main>
