@@ -8,11 +8,11 @@ uniform mat4 uTorusInvMatrix;
 uniform float uSamplesPerFrame;
 uniform float uPreviousFrameBlendWeight;
 
-uniform vec3 minCorner;
-uniform vec3 maxCorner;
-uniform vec3 emission;
-uniform vec3 color;
-uniform int type;
+uniform vec3 dBoxMinCorners[64];
+uniform vec3 dBoxMaxCorners[64];
+uniform vec3 dBoxMaxEmissions[64];
+uniform vec3 dBoxMaxColors[64];
+uniform int dBoxTypes[64];
 
 #define N_LIGHTS 3.0
 #define N_SPHERES 6
@@ -156,19 +156,19 @@ float SceneIntersect(out int finalIsRayExiting)
   int insideSphere = FALSE;
   int objectCount = 0;
 
-  for(int i = 0; i < 1; i++) {
-    d = BoxIntersect(minCorner, maxCorner, rayOrigin, rayDirection, n, isRayExiting);
-    if(d < t) {
-      t = d;
-      hitNormal = n;
-      hitEmission = emission;
-      hitColor = color;
-      hitType = 1;
-      finalIsRayExiting = isRayExiting;
-      hitObjectID = float(objectCount);
-    }
-    objectCount++;
-  }
+  // for(int i = 0; i < 1; i++) {
+  //   d = BoxIntersect(minCorner, maxCorner, rayOrigin, rayDirection, n, isRayExiting);
+  //   if(d < t) {
+  //     t = d;
+  //     hitNormal = n;
+  //     hitEmission = emission;
+  //     hitColor = color;
+  //     hitType = 1;
+  //     finalIsRayExiting = isRayExiting;
+  //     hitObjectID = float(objectCount);
+  //   }
+  //   objectCount++;
+  // }
 
   for(int i = 0; i < N_SPHERES; i++) {
     d = SphereIntersect(spheres[i].radius, spheres[i].position, rayOrigin, rayDirection);

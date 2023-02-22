@@ -9,7 +9,8 @@
 	import { default as scenePathTracingShader } from './MultiSPF_Dynamic_Scene_Fragment.glsl?raw';
 
 	import type { Mesh } from 'three';
-	import { sharedState } from './state';
+	import { sharedState } from '$lib/state';
+	import { pathTracingState } from '$lib/state';
 	import { Vector3 } from 'three';
 
 	const {
@@ -20,6 +21,8 @@
 		outputCamera,
 		sceneCamera
 	} = sharedState;
+
+	const { pathTracingBoxes } = pathTracingState;
 
 	initPathTracingCommons();
 	const PIXEL_RATIO = 1;
@@ -98,11 +101,6 @@
 	} // end function onWindowResize( event )
 
 	function init() {
-		initTHREEjs(); // boilerplate: init necessary three.js items and scene/demo-specific objects
-		window.addEventListener('resize', onWindowResize, false);
-	} // end function init()
-
-	function initTHREEjs() {
 		renderer.debug.checkShaderErrors = true;
 		renderer.autoClear = false;
 		renderer.toneMapping = THREE.ReinhardToneMapping;
@@ -184,22 +182,22 @@
 		pathTracingUniforms.uCameraIsMoving = { type: 'b1', value: false };
 		pathTracingUniforms.uUseOrthographicCamera = { type: 'b1', value: false };
 
-		pathTracingUniforms.minCorner = {
-			t: 'v3',
-			value: new Vector3(0, 0, 0)
-		};
-		pathTracingUniforms.maxCorner = {
-			t: 'v3',
-			value: new Vector3(20, 20, -20)
-		};
-		pathTracingUniforms.emission = {
-			t: 'v3',
-			value: new Vector3(0.5, 0.5, 0.5)
-		};
-		pathTracingUniforms.color = {
-			t: 'v3',
-			value: new Vector3(0.5, 0.25, 0)
-		};
+		// pathTracingUniforms.minCorner = {
+		// 	t: 'v3',
+		// 	value: new Vector3(0, 0, 0)
+		// };
+		// pathTracingUniforms.maxCorner = {
+		// 	t: 'v3',
+		// 	value: new Vector3(20, 20, -20)
+		// };
+		// pathTracingUniforms.emission = {
+		// 	t: 'v3',
+		// 	value: new Vector3(0.5, 0.5, 0.5)
+		// };
+		// pathTracingUniforms.color = {
+		// 	t: 'v3',
+		// 	value: new Vector3(0.5, 0.25, 0)
+		// };
 
 		pathTracingDefines = {
 			//NUMBER_OF_TRIANGLES: total_number_of_triangles
@@ -221,7 +219,7 @@
 			uSceneIsDynamic: { type: 'b1', value: sceneIsDynamic },
 			uUseToneMapping: { type: 'b1', value: useToneMapping }
 		};
-
+		window.addEventListener('resize', onWindowResize, false);
 		// this 'jumpstarts' the initial dimensions and parameters for the window and renderer
 		onWindowResize();
 
@@ -323,16 +321,16 @@
 	}
 
 	function updateVariablesAndUniforms() {
-		pathTracingUniforms.minCorner.value.set(
-			userBox.position.x - 10,
-			userBox.position.y - 10,
-			userBox.position.z - 10
-		);
-		pathTracingUniforms.maxCorner.value.set(
-			userBox.position.x + 10,
-			userBox.position.y + 10,
-			userBox.position.z + 10
-		);
+		// pathTracingUniforms.minCorner.value.set(
+		// 	userBox.position.x - 10,
+		// 	userBox.position.y - 10,
+		// 	userBox.position.z - 10
+		// );
+		// pathTracingUniforms.maxCorner.value.set(
+		// 	userBox.position.x + 10,
+		// 	userBox.position.y + 10,
+		// 	userBox.position.z + 10
+		// );
 	}
 
 	$: {
@@ -344,8 +342,6 @@
 	}
 
 	useFrame(() => {
-		// everything is set up, now we can start animating
-
 		if ($sceneInitiated) {
 			animate();
 		}
@@ -374,10 +370,6 @@
 		<T.PlaneGeometry args={[2, 2]} />
 	</T.Mesh>
 	<slot />
-	<T.Mesh bind:ref={userBox}>
-		<T.BoxGeometry args={[20, 20, 20]} />
-		<T.MeshBasicMaterial color="yellow" wireframe />
-	</T.Mesh>
 </T.Scene>
 <T.Scene bind:ref={$screenCopyScene}>
 	<T.Mesh>

@@ -6,7 +6,7 @@
 	import { Euler } from 'three';
 	import { Quaternion } from 'three';
 	import { Vector3 } from 'three';
-	import { sharedState } from './state';
+	import { sharedState } from '$lib/state';
 
 	const {
 		sceneInitiated,

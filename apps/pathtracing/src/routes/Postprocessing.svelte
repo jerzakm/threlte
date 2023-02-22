@@ -2,7 +2,7 @@
 	import { useThrelte } from '@threlte/core';
 	import { BloomEffect, EffectComposer, EffectPass, KernelSize, RenderPass } from 'postprocessing';
 	import { onDestroy } from 'svelte';
-	import { sharedState } from './state';
+	import { sharedState } from '$lib/state';
 
 	const ctx = useThrelte();
 
