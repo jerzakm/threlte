@@ -22,6 +22,7 @@
 	const PIXEL_RATIO = 0.75;
 	const SAMPLES_PER_FRAME = 8;
 	const BLEND_WEIGHT = 0.7;
+	const EPS_intersect = 0.5;
 
 	let SCREEN_WIDTH;
 	let SCREEN_HEIGHT;
@@ -55,7 +56,6 @@
 	let isPaused = true;
 	let oldYawRotation, oldPitchRotation;
 
-	let EPS_intersect;
 	let blueNoiseTexture;
 	let useToneMapping = true;
 	let allowOrthographicCamera = true;
@@ -83,6 +83,7 @@
 	const setupControls = (camera: PerspectiveCamera) => {
 		//
 		camera.rotation.set(0, 0, 0);
+		camera.position.set(0, 20, 0);
 	};
 
 	const FirstPersonCameraControls = function (camera) {
@@ -135,13 +136,6 @@
 		})();
 	};
 
-	function onMouseWheel(event) {
-		if (isPaused) return;
-
-		// use the following instead, because event.preventDefault() gives errors in console
-		event.stopPropagation();
-	}
-
 	const { renderer, composer } = useThrelte();
 
 	function onWindowResize(event) {
@@ -177,7 +171,6 @@
 
 	function init() {
 		if (mouseControl) {
-			window.addEventListener('wheel', onMouseWheel, false);
 			window.addEventListener(
 				'dblclick',
 				function (event) {
@@ -479,8 +472,6 @@
 
 		cameraFlightSpeed = 60;
 
-		EPS_intersect = 0.1;
-
 		// Torus Object
 		torusObject = new THREE.Object3D();
 		$pathTracingScene?.add(torusObject);
@@ -488,12 +479,7 @@
 		torusObject.position.set(-60, 18, 50);
 		torusObject.scale.set(11.5, 11.5, 11.5);
 
-		// set camera's field of view
-		worldCamera.fov = 60;
-		focusDistance = 130.0;
-
 		// position and orient camera
-		cameraControlsObject.position.set(0, 20, 120);
 		// scene/demo-specific uniforms go here
 
 		pathTracingUniforms.uTorusInvMatrix = { value: new THREE.Matrix4() };
@@ -547,10 +533,6 @@
 		/>
 		<T.PlaneGeometry args={[2, 2]} />
 	</T.Mesh>
-	<!-- <T.Mesh>
-		<T.MeshStandardMaterial color="red" />
-		<T.BoxGeometry args={[2, 2]} />
-	</T.Mesh> -->
 </T.Scene>
 <T.Scene bind:ref={$screenCopyScene}>
 	<T.Mesh>

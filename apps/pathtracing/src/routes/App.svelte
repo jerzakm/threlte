@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { Canvas, useFrame, useThrelte } from '@threlte/core';
+	import { Canvas } from '@threlte/core';
 	import { KeyboardControls, wasdConfig } from 'svelte-kbc';
+	import PathTracingCore from './PathTracingCore.svelte';
 	import Postprocessing from './Postprocessing.svelte';
 	import Scene from './Scene.svelte';
 </script>
@@ -15,7 +16,9 @@
 			depth: false
 		}}
 	>
-		<Scene />
+		<PathTracingCore>
+			<Scene />
+		</PathTracingCore>
 		<Postprocessing />
 	</Canvas>
 </KeyboardControls>
