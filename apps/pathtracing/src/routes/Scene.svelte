@@ -9,14 +9,17 @@
 	import { Vector2, type OrthographicCamera, type PerspectiveCamera, type Scene } from 'three';
 
 	import { sharedState } from './state';
-	import { useKeyboardControls } from 'svelte-kbc';
 	import type { Mesh } from 'three';
 	import { Object3D } from 'three';
 
-	const { w, a, s, d, shift, space } = useKeyboardControls();
-
-	const { sceneInitiated, pathTracingScene, screenCopyScene, screenOutputScene, outputCamera } =
-		sharedState;
+	const {
+		sceneInitiated,
+		pathTracingScene,
+		screenCopyScene,
+		screenOutputScene,
+		outputCamera,
+		sceneCamera
+	} = sharedState;
 
 	initPathTracingCommons();
 	const PIXEL_RATIO = 0.75;
@@ -27,20 +30,23 @@
 	let SCREEN_WIDTH;
 	let SCREEN_HEIGHT;
 	let context;
-	let controls;
+	let controls: any;
 
-	let pathTracingUniforms = {};
-	let screenCopyUniforms, screenOutputUniforms;
-	let pathTracingDefines;
+	let pathTracingUniforms: any = {};
+	let screenCopyUniforms: any;
+	let screenOutputUniforms: any;
+	let pathTracingDefines: any;
 	let demoFragmentShaderFileName;
 	let pathTracingMesh: Mesh;
-	let pathTracingRenderTarget, screenCopyRenderTarget;
+	let pathTracingRenderTarget: any;
+	let screenCopyRenderTarget: any;
 
 	let quadCamera: OrthographicCamera;
 	let worldCamera: PerspectiveCamera;
 
-	let clock;
-	let frameTime, elapsedTime;
+	let clock: any;
+	let frameTime: any;
+	let elapsedTime: any;
 	let sceneIsDynamic = false;
 	let cameraFlightSpeed = 60;
 	let cameraRotationSpeed = 1;
@@ -54,7 +60,8 @@
 	let cameraIsMoving = false;
 	let cameraRecentlyMoving = false;
 	let isPaused = true;
-	let oldYawRotation, oldPitchRotation;
+	let oldYawRotation: any;
+	let oldPitchRotation: any;
 
 	let blueNoiseTexture;
 	let useToneMapping = true;
@@ -64,16 +71,16 @@
 	let filterDecaySpeed = 0.0002;
 
 	let ableToEngagePointerLock = true;
-	let orthographicCamera_ToggleController;
+	let orthographicCamera_ToggleController: any;
 
 	// the following variables will be used to calculate rotations and directions from the camera
 	let cameraDirectionVector = new THREE.Vector3(); //for moving where the camera is looking
 	let cameraRightVector = new THREE.Vector3(); //for strafing the camera right and left
 	let cameraUpVector = new THREE.Vector3(); //for moving camera up and down
 	let cameraWorldQuaternion = new THREE.Quaternion(); //for rotating scene objects to match camera's current rotation
-	let cameraControlsObject; //for positioning and moving the camera itself
-	let cameraControlsYawObject; //allows access to control camera's left/right movements through mobile input
-	let cameraControlsPitchObject; //allows access to control camera's up/down movements through mobile input
+	let cameraControlsObject: any; //for positioning and moving the camera itself
+	let cameraControlsYawObject: any; //allows access to control camera's left/right movements through mobile input
+	let cameraControlsPitchObject: any; //allows access to control camera's up/down movements through mobile input
 
 	let PI_2 = Math.PI / 2; //used by controls below
 
@@ -86,59 +93,9 @@
 		camera.position.set(0, 20, 0);
 	};
 
-	const FirstPersonCameraControls = function (camera) {
-		camera.rotation.set(0, 0, 0);
-		var pitchObject = new Object3D();
-		pitchObject.add(camera);
-		var yawObject = new Object3D();
-		yawObject.add(pitchObject);
-		var movementX = 0;
-		var movementY = 0;
-		var onMouseMove = function (event) {
-			if (isPaused) return;
-			movementX = event.movementX || event.mozMovementX || 0;
-			movementY = event.movementY || event.mozMovementY || 0;
-			yawObject.rotation.y -= movementX * 0.0012 * cameraRotationSpeed;
-			pitchObject.rotation.x -= movementY * 0.001 * cameraRotationSpeed;
-			// clamp the camera's vertical movement (around the x-axis) to the scene's 'ceiling' and 'floor'
-			pitchObject.rotation.x = Math.max(-PI_2, Math.min(PI_2, pitchObject.rotation.x));
-		};
-		document.addEventListener('mousemove', onMouseMove, false);
-		this.getObject = function () {
-			return yawObject;
-		};
-		this.getYawObject = function () {
-			return yawObject;
-		};
-		this.getPitchObject = function () {
-			return pitchObject;
-		};
-		this.getDirection = (function () {
-			var te = pitchObject.matrixWorld.elements;
-			return function (v) {
-				v.set(te[8], te[9], te[10]).negate();
-				return v;
-			};
-		})();
-		this.getUpVector = (function () {
-			var te = pitchObject.matrixWorld.elements;
-			return function (v) {
-				v.set(te[4], te[5], te[6]);
-				return v;
-			};
-		})();
-		this.getRightVector = (function () {
-			var te = pitchObject.matrixWorld.elements;
-			return function (v) {
-				v.set(te[0], te[1], te[2]);
-				return v;
-			};
-		})();
-	};
-
 	const { renderer, composer } = useThrelte();
 
-	function onWindowResize(event) {
+	function onWindowResize(event: any) {
 		// the following change to document.body.clientWidth and Height works better for mobile, especially iOS
 		// suggestion from Github user q750831855  - Thank you!
 		SCREEN_WIDTH = window.innerWidth;
@@ -170,43 +127,6 @@
 	} // end function onWindowResize( event )
 
 	function init() {
-		if (mouseControl) {
-			window.addEventListener(
-				'dblclick',
-				function (event) {
-					event.preventDefault();
-				},
-				false
-			);
-
-			document.body.addEventListener(
-				'click',
-				function (event) {
-					if (!ableToEngagePointerLock) return;
-					this.requestPointerLock = this.requestPointerLock || this.mozRequestPointerLock;
-					this.requestPointerLock();
-				},
-				false
-			);
-
-			pointerlockChange = function (event) {
-				if (
-					document.pointerLockElement === document.body ||
-					document.mozPointerLockElement === document.body ||
-					document.webkitPointerLockElement === document.body
-				) {
-					isPaused = false;
-				} else {
-					isPaused = true;
-				}
-			};
-
-			// Hook pointer lock state change events
-			document.addEventListener('pointerlockchange', pointerlockChange, false);
-			document.addEventListener('mozpointerlockchange', pointerlockChange, false);
-			document.addEventListener('webkitpointerlockchange', pointerlockChange, false);
-		} // end if (mouseControl)
-
 		initTHREEjs(); // boilerplate: init necessary three.js items and scene/demo-specific objects
 		window.addEventListener('resize', onWindowResize, false);
 	} // end function init()
@@ -215,8 +135,8 @@
 		renderer.debug.checkShaderErrors = true;
 		renderer.autoClear = false;
 		renderer.toneMapping = THREE.ReinhardToneMapping;
-		context = renderer.getContext();
-		context.getExtension('EXT_color_buffer_float');
+		context = renderer?.getContext();
+		context?.getExtension('EXT_color_buffer_float');
 
 		clock = new THREE.Clock();
 
@@ -228,15 +148,9 @@
 		// constantly updated inside the 3d scene.  Its view will ultimately get passed back to the
 		// stationary quadCamera, which renders the scene to a fullscreen quad (made up of 2 large triangles).
 
-		controls = new FirstPersonCameraControls(worldCamera);
-
 		setupControls(worldCamera);
 
-		cameraControlsObject = controls.getObject();
-		cameraControlsYawObject = controls.getYawObject();
-		cameraControlsPitchObject = controls.getPitchObject();
-
-		$pathTracingScene?.add(cameraControlsObject);
+		$pathTracingScene?.add(worldCamera);
 
 		// setup render targets...
 		pathTracingRenderTarget = new THREE.WebGLRenderTarget(
@@ -344,59 +258,12 @@
 		// reset flags
 		cameraIsMoving = false;
 
-		// check user controls
-		if (mouseControl) {
-			// movement detected
-			if (
-				oldYawRotation != cameraControlsYawObject.rotation.y ||
-				oldPitchRotation != cameraControlsPitchObject.rotation.x
-			) {
-				cameraIsMoving = true;
-			}
-
-			// save state for next frame
-			oldYawRotation = cameraControlsYawObject.rotation.y;
-			oldPitchRotation = cameraControlsPitchObject.rotation.x;
-		} // end if (mouseControl)
-
 		// this gives us a vector in the direction that the camera is pointing,
 		// which will be useful for moving the camera 'forward' and shooting projectiles in that direction
-		controls.getDirection(cameraDirectionVector);
-		cameraDirectionVector.normalize();
-		controls.getUpVector(cameraUpVector);
-		cameraUpVector.normalize();
-		controls.getRightVector(cameraRightVector);
-		cameraRightVector.normalize();
 
 		// the following gives us a rotation quaternion (4D vector), which will be useful for
 		// rotating scene objects to match the camera's rotation
 		worldCamera.getWorldQuaternion(cameraWorldQuaternion);
-
-		if ($w) {
-			cameraControlsObject.position.add(
-				cameraDirectionVector.multiplyScalar(cameraFlightSpeed * frameTime)
-			);
-			cameraIsMoving = true;
-		}
-		if ($s) {
-			cameraControlsObject.position.sub(
-				cameraDirectionVector.multiplyScalar(cameraFlightSpeed * frameTime)
-			);
-			cameraIsMoving = true;
-		}
-		if ($a) {
-			cameraControlsObject.position.sub(
-				cameraRightVector.multiplyScalar(cameraFlightSpeed * frameTime)
-			);
-			cameraIsMoving = true;
-		}
-		if ($d) {
-			cameraControlsObject.position.add(
-				cameraRightVector.multiplyScalar(cameraFlightSpeed * frameTime)
-			);
-			cameraIsMoving = true;
-		}
-
 		// update scene/demo-specific input(if custom), variables and uniforms every animation frame
 		updateVariablesAndUniforms();
 
@@ -430,7 +297,6 @@
 		pathTracingUniforms.uRandomVec2.value.set(Math.random(), Math.random());
 
 		// CAMERA
-		cameraControlsObject.updateMatrixWorld(true);
 		worldCamera.updateMatrixWorld(true);
 		pathTracingUniforms.uCameraMatrix.value.copy(worldCamera.matrixWorld);
 
@@ -470,8 +336,6 @@
 		// scene/demo-specific three.js objects setup goes here
 		sceneIsDynamic = true;
 
-		cameraFlightSpeed = 60;
-
 		// Torus Object
 		torusObject = new THREE.Object3D();
 		$pathTracingScene?.add(torusObject);
@@ -502,6 +366,7 @@
 		if (renderer && $screenOutputScene) {
 			init(); // init app and start animating
 			outputCamera.set(quadCamera);
+			sceneCamera.set(worldCamera);
 		}
 	}
 
