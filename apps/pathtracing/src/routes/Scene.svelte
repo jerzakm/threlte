@@ -10,6 +10,8 @@
 
 	import { sharedState } from './state';
 	import { useKeyboardControls } from 'svelte-kbc';
+	import type { Mesh } from 'three';
+	import { Object3D } from 'three';
 
 	const { w, a, s, d, shift, space } = useKeyboardControls();
 
@@ -23,14 +25,10 @@
 	let controls;
 
 	let pathTracingUniforms = {};
-	let pathTracingUniformsGroups = [];
 	let screenCopyUniforms, screenOutputUniforms;
 	let pathTracingDefines;
-	let pathTracingVertexShader;
 	let demoFragmentShaderFileName;
-	let pathTracingGeometry, pathTracingMaterial, pathTracingMesh;
-	let screenCopyGeometry, screenCopyMaterial, screenCopyMesh;
-	let screenOutputGeometry, screenOutputMaterial, screenOutputMesh;
+	let pathTracingMesh: Mesh;
 	let pathTracingRenderTarget, screenCopyRenderTarget;
 
 	let quadCamera: OrthographicCamera;
@@ -78,69 +76,57 @@
 
 	let mouseControl = true;
 	let pointerlockChange;
+
+	const setupControls = (camera: PerspectiveCamera) => {
+		//
+		camera.rotation.set(0, 0, 0);
+	};
+
 	const FirstPersonCameraControls = function (camera) {
 		camera.rotation.set(0, 0, 0);
-
-		var pitchObject = new THREE.Object3D();
+		var pitchObject = new Object3D();
 		pitchObject.add(camera);
-
-		var yawObject = new THREE.Object3D();
+		var yawObject = new Object3D();
 		yawObject.add(pitchObject);
-
 		var movementX = 0;
 		var movementY = 0;
-
 		var onMouseMove = function (event) {
 			if (isPaused) return;
 			movementX = event.movementX || event.mozMovementX || 0;
 			movementY = event.movementY || event.mozMovementY || 0;
-
 			yawObject.rotation.y -= movementX * 0.0012 * cameraRotationSpeed;
 			pitchObject.rotation.x -= movementY * 0.001 * cameraRotationSpeed;
 			// clamp the camera's vertical movement (around the x-axis) to the scene's 'ceiling' and 'floor'
 			pitchObject.rotation.x = Math.max(-PI_2, Math.min(PI_2, pitchObject.rotation.x));
 		};
-
 		document.addEventListener('mousemove', onMouseMove, false);
-
 		this.getObject = function () {
 			return yawObject;
 		};
-
 		this.getYawObject = function () {
 			return yawObject;
 		};
-
 		this.getPitchObject = function () {
 			return pitchObject;
 		};
-
 		this.getDirection = (function () {
 			var te = pitchObject.matrixWorld.elements;
-
 			return function (v) {
 				v.set(te[8], te[9], te[10]).negate();
-
 				return v;
 			};
 		})();
-
 		this.getUpVector = (function () {
 			var te = pitchObject.matrixWorld.elements;
-
 			return function (v) {
 				v.set(te[4], te[5], te[6]);
-
 				return v;
 			};
 		})();
-
 		this.getRightVector = (function () {
 			var te = pitchObject.matrixWorld.elements;
-
 			return function (v) {
 				v.set(te[0], te[1], te[2]);
-
 				return v;
 			};
 		})();
@@ -244,6 +230,8 @@
 
 		controls = new FirstPersonCameraControls(worldCamera);
 
+		setupControls(worldCamera);
+
 		cameraControlsObject = controls.getObject();
 		cameraControlsYawObject = controls.getYawObject();
 		cameraControlsPitchObject = controls.getPitchObject();
@@ -299,7 +287,6 @@
 		// setup screen-size quad geometry and shaders....
 
 		// this full-screen quad mesh performs the path tracing operations and produces a screen-sized image
-		pathTracingGeometry = new THREE.PlaneGeometry(2, 2);
 
 		pathTracingUniforms.tPreviousTexture = { type: 't', value: screenCopyRenderTarget.texture };
 		pathTracingUniforms.tBlueNoiseTexture = { type: 't', value: blueNoiseTexture };
@@ -568,7 +555,7 @@
 </T.Scene>
 
 <T.Scene bind:ref={$screenOutputScene}>
-	<T.Mesh bind:ref={screenOutputMesh}>
+	<T.Mesh>
 		<T.ShaderMaterial
 			uniforms={screenOutputUniforms}
 			vertexShader={commonPathTracingVertex}
