@@ -1,18 +1,7 @@
 <script lang="ts">
 	import { useThrelte } from '@threlte/core';
-	import {
-		BloomEffect,
-		ChromaticAberrationEffect,
-		EffectComposer,
-		EffectPass,
-		GaussianBlurPass,
-		KernelSize,
-		RenderPass,
-		SMAAEffect,
-		SMAAPreset
-	} from 'postprocessing';
+	import { BloomEffect, EffectComposer, EffectPass, KernelSize, RenderPass } from 'postprocessing';
 	import { onDestroy } from 'svelte';
-	import { Vector2 } from 'three';
 	import { sharedState } from './state';
 
 	const ctx = useThrelte();
@@ -40,31 +29,10 @@
 			kernelSize: KernelSize.MEDIUM
 		});
 		bloomEffect.luminancePass.enabled = true;
-		// (bloomEffect as any).ignoreBackground = true;
 
-		composer.addPass(new RenderPass($screenOutputScene, $outputCamera));
 		composer.addPass(new RenderPass($screenOutputScene, $outputCamera));
 
 		composer.addPass(new EffectPass($camera, bloomEffect));
-		// composer.addPass(
-		// 	new GaussianBlurPass({
-		// 		iterations: 3,
-		// 		kernelSize: 8,
-		// 		resolutionScale: 1,
-		// 		resolutionX: window.innerWidth,
-		// 		resolutionY: window.innerHeight
-		// 	})
-		// );
-		composer.addPass(
-			new EffectPass(
-				$camera,
-				new ChromaticAberrationEffect({
-					offset: new Vector2(0.001, 0.001),
-					modulationOffset: 0,
-					radialModulation: false
-				})
-			)
-		);
 	};
 
 	$: if (renderer && $camera && $screenOutputScene) {

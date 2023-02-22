@@ -64,7 +64,7 @@
 	let filterDecaySpeed = 0.0002;
 
 	let ableToEngagePointerLock = true;
-	let orthographicCamera_ToggleController, orthographicCamera_ToggleObject;
+	let orthographicCamera_ToggleController;
 
 	// the following variables will be used to calculate rotations and directions from the camera
 	let cameraDirectionVector = new THREE.Vector3(); //for moving where the camera is looking
@@ -547,6 +547,10 @@
 		/>
 		<T.PlaneGeometry args={[2, 2]} />
 	</T.Mesh>
+	<!-- <T.Mesh>
+		<T.MeshStandardMaterial color="red" />
+		<T.BoxGeometry args={[2, 2]} />
+	</T.Mesh> -->
 </T.Scene>
 <T.Scene bind:ref={$screenCopyScene}>
 	<T.Mesh>
