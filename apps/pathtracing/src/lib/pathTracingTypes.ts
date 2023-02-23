@@ -9,7 +9,7 @@ export interface PathTracingBox {
 	invMatrix: number[];
 }
 
-export const materialTypes = {
+export const ptMaterials = {
 	SPOT_LIGHT: -2,
 	POINT_LIGHT: -1,
 	LIGHT: 0,

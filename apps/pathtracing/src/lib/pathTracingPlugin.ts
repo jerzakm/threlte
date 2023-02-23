@@ -5,21 +5,21 @@ import { BoxGeometry, Matrix4, Mesh, MeshStandardMaterial, Object3D } from 'thre
 import type { PathTracingBox, v3 } from './pathTracingTypes';
 import { pathTracingState } from './state';
 
-const getMaterial = (material: MeshStandardMaterial) => {
+const getColor = (material: MeshStandardMaterial) => {
 	const { r, g, b } = material.color || { r: 0, g: 0, b: 0 };
-	return { type: 1, color: [r, g, b] satisfies v3 };
+	return { color: [r, g, b] satisfies v3 };
 };
 
-const setBox = (id: string, ref: any) => {
-	const box = getPathTracingBox(ref);
+const setBox = (id: string, ref: any, options: { ptMaterial: number }) => {
+	const box = getPathTracingBox(ref, options.ptMaterial);
 	pathTracingState.pathTracingBoxes.update((state) => ({ ...state, [id]: box }));
 };
 
-const getPathTracingBox = (mesh: Mesh) => {
+const getPathTracingBox = (mesh: Mesh, ptMaterial: number) => {
 	mesh.updateMatrixWorld();
 	const geometry: BoxGeometry = mesh.geometry;
 
-	const { type, color } = getMaterial(mesh.material);
+	const { color } = getColor(mesh.material);
 
 	const invMatrix = new Matrix4();
 	invMatrix.copy(mesh.matrixWorld).invert();
@@ -36,7 +36,7 @@ const getPathTracingBox = (mesh: Mesh) => {
 			geometry.parameters.height / 2,
 			geometry.parameters.depth / 2
 		],
-		type,
+		type: ptMaterial,
 		invMatrix: invMatrix.toArray(),
 		color
 	};
@@ -72,11 +72,14 @@ export const injectPathTracingPlugin = () => {
 		// applyProps(currentProps, currentRef);
 
 		let type: 'box' | 'sphere' = 'box';
+		const ptMaterial = props['ptMaterial'] || 1;
 		const id = `${ref.id}`;
 
 		useFrame(() => {
 			if (type == 'box') {
-				setBox(id, ref);
+				setBox(id, ref, {
+					ptMaterial
+				});
 			}
 		});
 
@@ -84,7 +87,9 @@ export const injectPathTracingPlugin = () => {
 			if (ref.type == 'Mesh') {
 				if (ref.geometry.type == 'BoxGeometry') {
 					type = 'box';
-					setBox(id, ref);
+					setBox(id, ref, {
+						ptMaterial
+					});
 				}
 				if (type == 'sphere') {
 					//

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { injectPathTracingPlugin } from '$lib/pathTracingPlugin';
+	import { ptMaterials } from '$lib/pathTracingTypes';
 	import { T, useFrame } from '@threlte/core';
 
 	injectPathTracingPlugin();
@@ -11,12 +12,12 @@
 	});
 </script>
 
-<T.Mesh ptDynamic>
+<T.Mesh ptDynamic ptMaterial={ptMaterials.COAT}>
 	<T.BoxGeometry args={[20, 20, 20]} />
 	<T.MeshBasicMaterial color="red" wireframe transparent opacity={0} />
 </T.Mesh>
 
-<T.Mesh ptDynamic position.x={50}>
+<T.Mesh ptDynamic ptMaterial={ptMaterials.COAT} position.x={50}>
 	<T.BoxGeometry args={[20, 20, 20]} />
 	<T.MeshBasicMaterial color="yellow" wireframe transparent opacity={0} />
 </T.Mesh>
@@ -27,12 +28,13 @@
 	position.x={10}
 	position.y={15}
 	rotation.z={Math.sin(time) * 5.5}
+	ptMaterial={ptMaterials.COAT}
 >
 	<T.BoxGeometry args={[10, 10, 10]} />
 	<T.MeshBasicMaterial color="green" wireframe transparent opacity={0} />
 </T.Mesh>
 
-<T.Mesh ptDynamic position.y={-1}>
+<T.Mesh ptDynamic position.y={-1} ptMaterial={ptMaterials.DIFF}>
 	<T.BoxGeometry args={[200, 1, 200]} />
 	<T.MeshBasicMaterial color="white" wireframe transparent opacity={0} />
 </T.Mesh>
