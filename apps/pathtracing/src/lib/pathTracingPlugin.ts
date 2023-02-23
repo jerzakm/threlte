@@ -1,21 +1,18 @@
 import { injectPlugin, useThrelte } from '@threlte/core';
-import { onMount, onDestroy } from 'svelte';
-import {
-	BoxGeometry,
-	Mesh,
-	Object3D,
-	Vector3,
-	type MeshStandardMaterialParameters,
-	Material,
-	MeshStandardMaterial
-} from 'three';
-import { pathTracingState } from './state';
-import type { PathTracingBox } from './pathTracingTypes';
+import { onDestroy, onMount } from 'svelte';
 import { get } from 'svelte/store';
+import { BoxGeometry, Mesh, MeshStandardMaterial, Object3D } from 'three';
+import type { PathTracingBox } from './pathTracingTypes';
+import { pathTracingState } from './state';
 
 const getMaterial = (material: MeshStandardMaterial) => {
 	const { r, g, b } = material.color || { r: 0, g: 0, b: 0 };
 	return { type: 1, color: [r, g, b] };
+};
+
+const setBox = (id: string, ref: any) => {
+	const box = getPathTracingBox(ref);
+	pathTracingState.pathTracingBoxes.update((state) => ({ ...state, [id]: box }));
 };
 
 const getPathTracingBox = (mesh: Mesh) => {
@@ -44,7 +41,7 @@ const getPathTracingBox = (mesh: Mesh) => {
 export const injectPathTracingPlugin = () => {
 	injectPlugin('pathTracing', ({ ref, props }) => {
 		// skip injection if ref is not an Object3D
-		if (!(ref instanceof Object3D) || !('render' in props)) return;
+		if (!(ref instanceof Object3D) || !('ptDynamic' in props)) return;
 		// get the invalidate function from the useThrelte hook
 		const { invalidate } = useThrelte();
 
@@ -73,13 +70,9 @@ export const injectPathTracingPlugin = () => {
 
 		onMount(() => {
 			if (ref.type == 'Mesh') {
-				console.log(ref);
 				if (ref.geometry.type == 'BoxGeometry') {
-					const box = getPathTracingBox(ref);
-					console.log(box);
 					type = 'box';
-
-					pathTracingBoxes.update((state) => ({ ...state, [id]: box }));
+					setBox(id, ref);
 				}
 			}
 			//
@@ -106,7 +99,7 @@ export const injectPathTracingPlugin = () => {
 				currentProps = props;
 				// applyProps(currentProps, currentRef);
 			},
-			pluginProps: ['render']
+			pluginProps: ['ptDynamic', 'ptMaterial']
 		};
 	});
 };

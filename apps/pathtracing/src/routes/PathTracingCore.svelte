@@ -27,7 +27,7 @@
 	initPathTracingCommons();
 	const PIXEL_RATIO = 1;
 	const SAMPLES_PER_FRAME = 8;
-	const BLEND_WEIGHT = 0.6;
+	const BLEND_WEIGHT = 0.9;
 	const EPS_intersect = 0.5;
 
 	let SCREEN_WIDTH;
