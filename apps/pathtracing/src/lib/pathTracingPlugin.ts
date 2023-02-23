@@ -86,6 +86,9 @@ export const injectPathTracingPlugin = () => {
 					type = 'box';
 					setBox(id, ref);
 				}
+				if (type == 'sphere') {
+					//
+				}
 			}
 			//
 		});
