@@ -12,6 +12,7 @@
 	import { sharedState } from '$lib/state';
 	import { pathTracingState } from '$lib/state';
 	import { Vector3 } from 'three';
+	import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 
 	const {
 		sceneInitiated,
@@ -223,6 +224,37 @@
 			uSceneIsDynamic: { type: 'b1', value: sceneIsDynamic },
 			uUseToneMapping: { type: 'b1', value: useToneMapping }
 		};
+
+		const hdrLoader = new RGBELoader();
+		hdrLoader.type = THREE.FloatType; // override THREE's default of HalfFloatType
+
+		const hdrPath = 'textures/daytime.hdr';
+
+		const hdrTexture = hdrLoader.load(hdrPath, function (texture, textureData) {
+			texture.encoding = THREE.LinearEncoding;
+			texture.minFilter = THREE.NearestFilter;
+			texture.magFilter = THREE.NearestFilter;
+			texture.flipY = true;
+		});
+
+		// Environment variables
+		const skyLightIntensity = 2.0,
+			sunLightIntensity = 2.0,
+			sunColor = [1.0, 0.98, 0.92],
+			sunAngle = Math.PI / 2.5,
+			hdrExposure = 1.0;
+
+		const sunDirection = new THREE.Vector3();
+
+		sunDirection.set(Math.cos(sunAngle) * 1.2, Math.sin(sunAngle), -Math.cos(sunAngle) * 3.0);
+		sunDirection.normalize();
+
+		pathTracingUniforms.tHDRTexture = { value: hdrTexture };
+		pathTracingUniforms.uSkyLightIntensity = { value: skyLightIntensity };
+		pathTracingUniforms.uSunLightIntensity = { value: sunLightIntensity };
+		pathTracingUniforms.uSunColor = { value: new THREE.Color().fromArray(sunColor.map((x) => x)) };
+		pathTracingUniforms.uSunDirection = { value: sunDirection };
+
 		window.addEventListener('resize', onWindowResize, false);
 		// this 'jumpstarts' the initial dimensions and parameters for the window and renderer
 		onWindowResize();

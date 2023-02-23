@@ -15,6 +15,11 @@ uniform vec3 dBoxColors[16];
 uniform mat4 dBoxInvMatrices[16];
 uniform int dBoxTypes[16];
 
+uniform sampler2D tHDRTexture;
+uniform float uSkyLightIntensity;
+uniform float uSunLightIntensity;
+uniform vec3 uSunColor;
+
 #define N_LIGHTS 3.0
 #define N_SPHERES 6
 #define N_PLANES 1
@@ -144,6 +149,19 @@ Box boxes[N_BOXES];
 #include <pathtracing_box_intersect>
 
 #include <pathtracing_sample_sphere_light>
+
+vec3 Get_HDR_Color(vec3 rayDirection) {
+  vec2 sampleUV;
+  sampleUV.x = atan(rayDirection.z, rayDirection.x) * ONE_OVER_TWO_PI + 0.5;
+  sampleUV.y = asin(clamp(rayDirection.y, -1.0, 1.0)) * ONE_OVER_PI + 0.5;
+
+  vec3 texColor = texture(tHDRTexture, sampleUV).rgb;
+
+	// tone mapping
+  texColor = ACESFilmicToneMapping(texColor.rgb);
+
+  return texColor;
+}
 
 //-------------------------------------------------------------------------------------------------------------------
 float SceneIntersect(out int finalIsRayExiting)
@@ -291,6 +309,12 @@ vec3 CalculateRadiance(out vec3 objectNormal, out vec3 objectColor, out float ob
   vec3 tdir;
   vec3 x, n, nl;
 
+  int previousIntersecType = -100;
+  int willNeedReflectionRay = FALSE;
+  vec3 reflectionMask = vec3(1);
+  vec3 reflectionRayOrigin = vec3(0);
+  vec3 reflectionRayDirection = vec3(0);
+
   float t;
   float nc, nt, ratioIoR, Re, Tr;
   float P, RP, TP;
@@ -307,16 +331,57 @@ vec3 CalculateRadiance(out vec3 objectNormal, out vec3 objectColor, out float ob
   lightChoice = spheres[int(rng() * N_LIGHTS)];
 
   for(int bounces = 0; bounces < 6; bounces++) {
+    previousIntersecType = hitType;
 
     t = SceneIntersect(isRayExiting);
 
-		/*
-		//not used in this scene because we are inside a huge sphere - no rays can escape
-		if (t == INFINITY)
-		{
-                        break;
-		}
-		*/
+    if(t == INFINITY) {
+			// ray hits sky first
+      if(bounces == 0) {
+        pixelSharpness = 1.01;
+
+        accumCol += Get_HDR_Color(rayDirection);
+        break;
+      }
+
+			// if ray bounced off of diffuse material and hits sky
+      if(previousIntersecType == DIFF) {
+        if(sampleLight == TRUE)
+          accumCol += mask * uSunColor * uSunLightIntensity * 0.5;
+        else
+          accumCol += mask * Get_HDR_Color(rayDirection) * uSkyLightIntensity * 0.5;
+      }
+
+			// if ray bounced off of glass and hits sky
+      if(previousIntersecType == REFR) {
+        if(diffuseCount == 0) // camera looking through glass, hitting the sky
+        {
+          pixelSharpness = 1.01;
+          mask *= Get_HDR_Color(rayDirection);
+        } else if(sampleLight == TRUE) // sun rays going through glass, hitting another surface
+          mask *= uSunColor * uSunLightIntensity;
+        else  // sky rays going through glass, hitting another surface
+          mask *= Get_HDR_Color(rayDirection) * uSkyLightIntensity;
+
+        if(bounceIsSpecular == TRUE) // prevents sun 'fireflies' on diffuse surfaces
+          accumCol += mask;
+      }
+
+      if(willNeedReflectionRay == TRUE) {
+        mask = reflectionMask;
+        rayOrigin = reflectionRayOrigin;
+        rayDirection = reflectionRayDirection;
+
+        willNeedReflectionRay = FALSE;
+        bounceIsSpecular = TRUE;
+        sampleLight = FALSE;
+        diffuseCount = 0;
+        continue;
+      }
+			// reached a light, so we can exit
+      break;
+
+    } // end if (t == INFINITY)
 
 		// useful data 
     n = normalize(hitNormal);
@@ -501,7 +566,7 @@ void SetupScene(void)
   spheres[0] = Sphere(150.0, vec3(-600, 100, 600), L1, z, LIGHT);//spherical white Light1 
   spheres[1] = Sphere(100.0, vec3(300, 400, -300), L2, z, LIGHT);//spherical yellow Light2
   spheres[2] = Sphere(50.0, vec3(500, 250, -100), L3, z, LIGHT);//spherical blue Light3
-  spheres[3] = Sphere(2000.0, vec3(0.0, 1000.0, 0.0), vec3(1.0, 1.0, 1.0), vec3(1.), DIFF);//Checkered Floor
+  // spheres[3] = Sphere(2000.0, vec3(0.0, 1000.0, 0.0), vec3(1.0, 1.0, 1.0), vec3(1.), DIFF);//Checkered Floor
 
   // spheres[4] = Sphere(16.5, vec3(-26.0, 17.2, 5.0), z, vec3(0.95, 0.95, 0.95), SPEC);//Mirror sphere
   // spheres[5] = Sphere(15.0, vec3(sin(mod(uTime * 0.3, TWO_PI)) * 80.0, 25, cos(mod(uTime * 0.1, TWO_PI)) * 80.0), z, vec3(1.0, 1.0, 1.0), REFR);//Glass sphere
