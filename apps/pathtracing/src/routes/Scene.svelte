@@ -1,8 +1,14 @@
 <script lang="ts">
 	import { injectPathTracingPlugin } from '$lib/pathTracingPlugin';
-	import { T } from '@threlte/core';
+	import { T, useFrame } from '@threlte/core';
 
 	injectPathTracingPlugin();
+
+	let time = 0;
+
+	useFrame(({ clock }) => {
+		time = clock.elapsedTime;
+	});
 </script>
 
 <T.Mesh ptDynamic>
@@ -15,9 +21,15 @@
 	<T.MeshBasicMaterial color="yellow" wireframe transparent opacity={0} />
 </T.Mesh>
 
-<T.Mesh ptDynamic position.z={-20} position.x={10} position.y={15} rotation.z={5.5}>
+<T.Mesh
+	ptDynamic
+	position.z={-20}
+	position.x={10}
+	position.y={15}
+	rotation.z={Math.sin(time) * 5.5}
+>
 	<T.BoxGeometry args={[10, 10, 10]} />
-	<T.MeshBasicMaterial color="green" wireframe transparent opacity={1} />
+	<T.MeshBasicMaterial color="green" wireframe transparent opacity={0} />
 </T.Mesh>
 
 <T.Mesh ptDynamic position.y={-1}>

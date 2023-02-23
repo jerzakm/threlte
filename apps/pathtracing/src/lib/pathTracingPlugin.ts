@@ -1,4 +1,4 @@
-import { injectPlugin, useThrelte } from '@threlte/core';
+import { injectPlugin, useFrame, useThrelte } from '@threlte/core';
 import { onDestroy, onMount } from 'svelte';
 import { get } from 'svelte/store';
 import { BoxGeometry, Matrix4, Mesh, MeshStandardMaterial, Object3D } from 'three';
@@ -73,6 +73,12 @@ export const injectPathTracingPlugin = () => {
 
 		let type: 'box' | 'sphere' = 'box';
 		const id = `${ref.id}`;
+
+		useFrame(() => {
+			if (type == 'box') {
+				setBox(id, ref);
+			}
+		});
 
 		onMount(() => {
 			if (ref.type == 'Mesh') {
