@@ -2,6 +2,9 @@
 	import { injectPathTracingPlugin } from '$lib/pathTracingPlugin';
 	import { ptMaterials } from '$lib/pathTracingTypes';
 	import { T, useFrame } from '@threlte/core';
+	import { AutoColliders, RigidBody } from '@threlte/rapier';
+	import { Color } from 'three';
+	import { DEG2RAD } from 'three/src/math/MathUtils';
 
 	injectPathTracingPlugin();
 
@@ -12,29 +15,35 @@
 	});
 </script>
 
-<T.Mesh ptDynamic ptMaterial={ptMaterials.COAT}>
-	<T.BoxGeometry args={[20, 20, 20]} />
-	<T.MeshBasicMaterial color="red" wireframe transparent opacity={0} />
-</T.Mesh>
+<RigidBody position={[-2.5, 80, 2.5]} rotation={[45 * DEG2RAD, 0, 45 * DEG2RAD]}>
+	<AutoColliders shape={'convexHull'}>
+		<T.Mesh ptDynamic ptMaterial={ptMaterials.COAT}>
+			<T.BoxGeometry args={[20, 20, 20]} />
+			<T.MeshBasicMaterial color="red" wireframe transparent opacity={0} />
+		</T.Mesh>
+	</AutoColliders>
+</RigidBody>
 
-<T.Mesh ptDynamic ptMaterial={ptMaterials.COAT} position.x={50}>
-	<T.BoxGeometry args={[20, 20, 20]} />
-	<T.MeshBasicMaterial color="yellow" wireframe transparent opacity={0} />
-</T.Mesh>
+{#each { length: 10 } as b, x}
+	{@const angle = (360 / (x + 1)) * DEG2RAD}
+	<RigidBody position={[Math.cos(angle) * 20, 10 + x * 5, Math.sin(angle) * 20]}>
+		<AutoColliders shape={'convexHull'}>
+			<T.Mesh ptDynamic ptMaterial={ptMaterials.COAT}>
+				<T.BoxGeometry args={[8, 8, 8]} />
+				<T.MeshBasicMaterial
+					color={new Color(Math.random(), Math.random(), Math.random())}
+					wireframe
+					transparent
+					opacity={0}
+				/>
+			</T.Mesh>
+		</AutoColliders>
+	</RigidBody>
+{/each}
 
-<T.Mesh
-	ptDynamic
-	position.z={-20}
-	position.x={10}
-	position.y={15}
-	rotation.z={Math.sin(time) * 5.5}
-	ptMaterial={ptMaterials.COAT}
->
-	<T.BoxGeometry args={[10, 10, 10]} />
-	<T.MeshBasicMaterial color="green" wireframe transparent opacity={0} />
-</T.Mesh>
-
-<T.Mesh ptDynamic position.y={-1} ptMaterial={ptMaterials.DIFF}>
-	<T.BoxGeometry args={[200, 1, 200]} />
-	<T.MeshBasicMaterial color="white" wireframe transparent opacity={0} />
-</T.Mesh>
+<AutoColliders>
+	<T.Mesh ptDynamic ptMaterial={ptMaterials.DIFF}>
+		<T.BoxGeometry args={[500, 1, 500]} />
+		<T.MeshBasicMaterial color="white" wireframe transparent opacity={0} />
+	</T.Mesh>
+</AutoColliders>
