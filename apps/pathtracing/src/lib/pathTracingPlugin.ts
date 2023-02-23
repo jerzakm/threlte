@@ -1,6 +1,36 @@
 import { injectPlugin, useThrelte } from '@threlte/core';
 import { onMount, onDestroy } from 'svelte';
-import { Object3D, Vector3 } from 'three';
+import { BoxGeometry, Mesh, Object3D, Vector3 } from 'three';
+import { pathTracingState } from './state';
+import type { PathTracingBox } from './pathTracingTypes';
+import { get } from 'svelte/store';
+
+const getMaterial = (material: any) => {
+	return { type: 1, color: [1, 0, 0] };
+};
+
+const getPathTracingBox = (mesh: Mesh) => {
+	const geometry: BoxGeometry = mesh.geometry;
+
+	const { type, color } = getMaterial(mesh.material);
+	const box: PathTracingBox = {
+		emission: { x: 0, y: 0, z: 0 },
+		minCorner: [
+			mesh.position.x - geometry.parameters.width / 2,
+			mesh.position.y - geometry.parameters.height / 2,
+			mesh.position.z - geometry.parameters.depth / 2
+		],
+		maxCorner: [
+			mesh.position.x + geometry.parameters.width / 2,
+			mesh.position.y + geometry.parameters.height / 2,
+			mesh.position.z + geometry.parameters.depth / 2
+		],
+		type,
+		color
+	};
+
+	return box;
+};
 
 export const injectPathTracingPlugin = () => {
 	injectPlugin('pathTracing', ({ ref, props }) => {
@@ -8,11 +38,13 @@ export const injectPathTracingPlugin = () => {
 		if (!(ref instanceof Object3D) || !('render' in props)) return;
 		// get the invalidate function from the useThrelte hook
 		const { invalidate } = useThrelte();
+
+		const { pathTracingBoxes } = pathTracingState;
+
 		// create some variables to store the current ref and props
 		let currentRef = ref;
 		let currentProps = props;
 		// create a temp vector to avoid creating new vectors on every iteration
-		const tempV3 = new Vector3();
 		// const applyProps = (p: typeof props, r: typeof ref) => {
 		// 	if (!('pathTracing' in p)) return;
 		// 	const prop = p.lookAt;
@@ -27,15 +59,37 @@ export const injectPathTracingPlugin = () => {
 		// };
 		// applyProps(currentProps, currentRef);
 
+		let type: 'box' | 'sphere' = 'box';
+		const id = `${ref.id}`;
+
 		onMount(() => {
-			console.log('mounted injection');
+			if (ref.type == 'Mesh') {
+				console.log(ref);
+				if (ref.geometry.type == 'BoxGeometry') {
+					const box = getPathTracingBox(ref);
+					console.log(box);
+					type = 'box';
+
+					pathTracingBoxes.update((state) => ({ ...state, [id]: box }));
+				}
+			}
 			//
 		});
 
-		console.log(ref);
+		onDestroy(() => {
+			const n = get(pathTracingBoxes);
+			delete n[id];
+
+			pathTracingBoxes.set(n);
+		});
+
 		return {
 			onRefChange(ref) {
 				currentRef = ref;
+
+				if (type == 'box') {
+					//
+				}
 
 				// applyProps(currentProps, currentRef);
 			},

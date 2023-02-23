@@ -8,11 +8,11 @@ uniform mat4 uTorusInvMatrix;
 uniform float uSamplesPerFrame;
 uniform float uPreviousFrameBlendWeight;
 
-uniform vec3 dBoxMinCorners[64];
-uniform vec3 dBoxMaxCorners[64];
-uniform vec3 dBoxMaxEmissions[64];
-uniform vec3 dBoxMaxColors[64];
-uniform int dBoxTypes[64];
+uniform vec3 dBoxMinCorners[16];
+uniform vec3 dBoxMaxCorners[16];
+uniform vec3 dBoxMaxEmissions[16];
+uniform vec3 dBoxColors[16];
+uniform int dBoxTypes[16];
 
 #define N_LIGHTS 3.0
 #define N_SPHERES 6
@@ -156,19 +156,24 @@ float SceneIntersect(out int finalIsRayExiting)
   int insideSphere = FALSE;
   int objectCount = 0;
 
-  // for(int i = 0; i < 1; i++) {
-  //   d = BoxIntersect(minCorner, maxCorner, rayOrigin, rayDirection, n, isRayExiting);
-  //   if(d < t) {
-  //     t = d;
-  //     hitNormal = n;
-  //     hitEmission = emission;
-  //     hitColor = color;
-  //     hitType = 1;
-  //     finalIsRayExiting = isRayExiting;
-  //     hitObjectID = float(objectCount);
-  //   }
-  //   objectCount++;
-  // }
+  for(int i = 0; i < 16; i++) {
+    if(dBoxTypes[i] < 0)
+      break;
+
+    if(dBoxTypes[i] > 0) {
+      d = BoxIntersect(dBoxMinCorners[i], dBoxMaxCorners[i], rayOrigin, rayDirection, n, isRayExiting);
+      if(d < t) {
+        t = d;
+        hitNormal = n;
+        hitEmission = vec3(0.5);
+        hitColor = dBoxColors[i];
+        hitType = dBoxTypes[i];
+        finalIsRayExiting = isRayExiting;
+        hitObjectID = float(objectCount);
+      }
+      objectCount++;
+    }
+  }
 
   for(int i = 0; i < N_SPHERES; i++) {
     d = SphereIntersect(spheres[i].radius, spheres[i].position, rayOrigin, rayDirection);
@@ -494,8 +499,8 @@ void SetupScene(void)
   spheres[2] = Sphere(50.0, vec3(500, 250, -100), L3, z, LIGHT);//spherical blue Light3
 
   spheres[3] = Sphere(4000.0, vec3(0.0, 1000.0, 0.0), vec3(1.0, 1.0, 1.0), vec3(0.5, 0.5, 1.0), DIFF);//Checkered Floor
-  spheres[4] = Sphere(16.5, vec3(-26.0, 17.2, 5.0), z, vec3(0.95, 0.95, 0.95), SPEC);//Mirror sphere
-  spheres[5] = Sphere(15.0, vec3(sin(mod(uTime * 0.3, TWO_PI)) * 80.0, 25, cos(mod(uTime * 0.1, TWO_PI)) * 80.0), z, vec3(1.0, 1.0, 1.0), REFR);//Glass sphere
+  // spheres[4] = Sphere(16.5, vec3(-26.0, 17.2, 5.0), z, vec3(0.95, 0.95, 0.95), SPEC);//Mirror sphere
+  // spheres[5] = Sphere(15.0, vec3(sin(mod(uTime * 0.3, TWO_PI)) * 80.0, 25, cos(mod(uTime * 0.1, TWO_PI)) * 80.0), z, vec3(1.0, 1.0, 1.0), REFR);//Glass sphere
 
   // ellipsoids[0] = Ellipsoid(vec3(30, 40, 16), vec3(cos(mod(uTime * 0.5, TWO_PI)) * 80.0, 5, -30), z, vec3(1.0, 0.765557, 0.336057), SPEC);//metallic gold ellipsoid
 

@@ -169,6 +169,10 @@
 		pathTracingUniforms.uResolution = { type: 'v2', value: new THREE.Vector2() };
 		pathTracingUniforms.uRandomVec2 = { type: 'v2', value: new THREE.Vector2() };
 
+		pathTracingUniforms.dBoxMinCorners = { value: [-10, -10, -10] };
+		pathTracingUniforms.dBoxMaxCorners = { value: [10, 10, 10] };
+		pathTracingUniforms.dBoxTypes = { value: [1] };
+
 		pathTracingUniforms.uEPS_intersect = { type: 'f', value: EPS_intersect };
 		pathTracingUniforms.uTime = { type: 'f', value: 0.0 };
 		pathTracingUniforms.uSampleCounter = { type: 'f', value: 0.0 }; //0.0
@@ -321,16 +325,22 @@
 	}
 
 	function updateVariablesAndUniforms() {
-		// pathTracingUniforms.minCorner.value.set(
-		// 	userBox.position.x - 10,
-		// 	userBox.position.y - 10,
-		// 	userBox.position.z - 10
-		// );
-		// pathTracingUniforms.maxCorner.value.set(
-		// 	userBox.position.x + 10,
-		// 	userBox.position.y + 10,
-		// 	userBox.position.z + 10
-		// );
+		const dBoxMinCorners = [];
+		const dBoxMaxCorners = [];
+		const dBoxTypes = [];
+		const dBoxColors = [];
+		const bArr = Object.values($pathTracingBoxes);
+		bArr.map((box) => {
+			dBoxMinCorners.push(...box.minCorner);
+			dBoxMaxCorners.push(...box.maxCorner);
+			dBoxColors.push(...box.color);
+			dBoxTypes.push(box.type);
+		});
+
+		pathTracingUniforms.dBoxMinCorners = { value: dBoxMinCorners };
+		pathTracingUniforms.dBoxMaxCorners = { value: dBoxMaxCorners };
+		pathTracingUniforms.dBoxTypes = { value: dBoxTypes };
+		pathTracingUniforms.dBoxColors = { value: dBoxColors };
 	}
 
 	$: {

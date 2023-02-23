@@ -1,19 +1,6 @@
 import { writable } from 'svelte/store';
 import type { OrthographicCamera, PerspectiveCamera, Scene } from 'three';
-
-type v3 = {
-	x: number;
-	y: number;
-	z: number;
-};
-
-interface PathTracingBox {
-	minCorner: v3;
-	maxCorner: v3;
-	color: v3;
-	emission: v3;
-	type: number;
-}
+import type { PathTracingBox } from './pathTracingTypes';
 
 const sceneInitiated = writable(false);
 const pathTracingScene = writable<Scene | undefined>(undefined);
