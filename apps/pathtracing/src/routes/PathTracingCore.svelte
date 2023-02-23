@@ -325,15 +325,17 @@
 	}
 
 	function updateVariablesAndUniforms() {
-		const dBoxMinCorners = [];
-		const dBoxMaxCorners = [];
-		const dBoxTypes = [];
-		const dBoxColors = [];
+		const dBoxMinCorners: number[] = [];
+		const dBoxMaxCorners: number[] = [];
+		const dBoxTypes: number[] = [];
+		const dBoxColors: number[] = [];
+		const dBoxInvMatrices: number[] = [];
 		const bArr = Object.values($pathTracingBoxes);
 		bArr.map((box) => {
 			dBoxMinCorners.push(...box.minCorner);
 			dBoxMaxCorners.push(...box.maxCorner);
 			dBoxColors.push(...box.color);
+			dBoxInvMatrices.push(...box.invMatrix);
 			dBoxTypes.push(box.type);
 		});
 
@@ -341,6 +343,7 @@
 		pathTracingUniforms.dBoxMaxCorners = { value: dBoxMaxCorners };
 		pathTracingUniforms.dBoxTypes = { value: dBoxTypes };
 		pathTracingUniforms.dBoxColors = { value: dBoxColors };
+		pathTracingUniforms.dBoxInvMatrices = { value: dBoxInvMatrices };
 	}
 
 	$: {

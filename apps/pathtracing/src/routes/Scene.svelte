@@ -15,9 +15,9 @@
 	<T.MeshBasicMaterial color="yellow" wireframe transparent opacity={0} />
 </T.Mesh>
 
-<T.Mesh ptDynamic position.z={-20} position.x={10}>
-	<T.BoxGeometry args={[20, 20, 20]} />
-	<T.MeshBasicMaterial color="green" wireframe transparent opacity={0} />
+<T.Mesh ptDynamic position.z={-20} position.x={10} position.y={15} rotation.z={5.5}>
+	<T.BoxGeometry args={[10, 10, 10]} />
+	<T.MeshBasicMaterial color="green" wireframe transparent opacity={1} />
 </T.Mesh>
 
 <T.Mesh ptDynamic position.y={-1}>

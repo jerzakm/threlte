@@ -12,6 +12,7 @@ uniform vec3 dBoxMinCorners[16];
 uniform vec3 dBoxMaxCorners[16];
 uniform vec3 dBoxMaxEmissions[16];
 uniform vec3 dBoxColors[16];
+uniform mat4 dBoxInvMatrices[16];
 uniform int dBoxTypes[16];
 
 #define N_LIGHTS 3.0

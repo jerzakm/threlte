@@ -1,13 +1,13 @@
 import { injectPlugin, useThrelte } from '@threlte/core';
 import { onDestroy, onMount } from 'svelte';
 import { get } from 'svelte/store';
-import { BoxGeometry, Mesh, MeshStandardMaterial, Object3D } from 'three';
-import type { PathTracingBox } from './pathTracingTypes';
+import { BoxGeometry, Matrix4, Mesh, MeshStandardMaterial, Object3D } from 'three';
+import type { PathTracingBox, v3 } from './pathTracingTypes';
 import { pathTracingState } from './state';
 
 const getMaterial = (material: MeshStandardMaterial) => {
 	const { r, g, b } = material.color || { r: 0, g: 0, b: 0 };
-	return { type: 1, color: [r, g, b] };
+	return { type: 1, color: [r, g, b] satisfies v3 };
 };
 
 const setBox = (id: string, ref: any) => {
@@ -19,8 +19,12 @@ const getPathTracingBox = (mesh: Mesh) => {
 	const geometry: BoxGeometry = mesh.geometry;
 
 	const { type, color } = getMaterial(mesh.material);
+
+	const invMatrix = new Matrix4();
+	invMatrix.copy(mesh.matrixWorld).invert();
+
 	const box: PathTracingBox = {
-		emission: { x: 0, y: 0, z: 0 },
+		emission: [0, 0, 0],
 		minCorner: [
 			mesh.position.x - geometry.parameters.width / 2,
 			mesh.position.y - geometry.parameters.height / 2,
@@ -32,6 +36,7 @@ const getPathTracingBox = (mesh: Mesh) => {
 			mesh.position.z + geometry.parameters.depth / 2
 		],
 		type,
+		invMatrix: invMatrix.toArray(),
 		color
 	};
 
