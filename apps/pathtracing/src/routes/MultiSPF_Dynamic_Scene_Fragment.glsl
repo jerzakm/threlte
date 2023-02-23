@@ -490,15 +490,15 @@ void SetupScene(void)
 //-----------------------------------------------------------------------
 {
   vec3 z = vec3(0);
-  vec3 L1 = vec3(1.0, 1.0, 1.0) * 13.0;//13.0;// White light
-  vec3 L2 = vec3(1.0, 0.8, 0.2) * 4.0;//10.0;// Yellow light
+  vec3 L1 = vec3(1.0, 1.0, 1.0) * 93.0;//13.0;// White light
+  vec3 L2 = vec3(1.0, 0.1, 0.1) * 4.0;//10.0;// Yellow light
   vec3 L3 = vec3(0.1, 0.7, 1.0) * 2.0;//5.0; // Blue light
 
-  spheres[0] = Sphere(150.0, vec3(-400, 900, 200), L1, z, LIGHT);//spherical white Light1 
+  spheres[0] = Sphere(150.0, vec3(-600, 100, 600), L1, z, LIGHT);//spherical white Light1 
   spheres[1] = Sphere(100.0, vec3(300, 400, -300), L2, z, LIGHT);//spherical yellow Light2
   spheres[2] = Sphere(50.0, vec3(500, 250, -100), L3, z, LIGHT);//spherical blue Light3
 
-  spheres[3] = Sphere(4000.0, vec3(0.0, 1000.0, 0.0), vec3(1.0, 1.0, 1.0), vec3(0.5, 0.5, 1.0), DIFF);//Checkered Floor
+  spheres[3] = Sphere(2000.0, vec3(0.0, 1000.0, 0.0), vec3(1.0, 1.0, 1.0), vec3(1.), DIFF);//Checkered Floor
   // spheres[4] = Sphere(16.5, vec3(-26.0, 17.2, 5.0), z, vec3(0.95, 0.95, 0.95), SPEC);//Mirror sphere
   // spheres[5] = Sphere(15.0, vec3(sin(mod(uTime * 0.3, TWO_PI)) * 80.0, 25, cos(mod(uTime * 0.1, TWO_PI)) * 80.0), z, vec3(1.0, 1.0, 1.0), REFR);//Glass sphere
 
@@ -516,7 +516,7 @@ void SetupScene(void)
 
   // torii[0] = UnitTorus(0.75, z, vec3(0.955008, 0.637427, 0.538163), SPEC);//copper Torus
 
-  boxes[0] = Box(vec3(-100.0, 3, -200.0), vec3(100.0, 3, 200.0), z, vec3(0.5), DIFF);//Glass Box
+  // boxes[0] = Box(vec3(-100.0, 3, -200.0), vec3(100.0, 3, 200.0), z, vec3(0.5), DIFF);//Glass Box
   // boxes[1] = Box(vec3(56.0, 23.0, -66.0), vec3(94.0, 26.0, -124.0), z, vec3(0.0, 0.0, 0.0), DIFF);//Diffuse Box
 }
 

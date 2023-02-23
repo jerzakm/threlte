@@ -1,12 +1,21 @@
 import { injectPlugin, useThrelte } from '@threlte/core';
 import { onMount, onDestroy } from 'svelte';
-import { BoxGeometry, Mesh, Object3D, Vector3 } from 'three';
+import {
+	BoxGeometry,
+	Mesh,
+	Object3D,
+	Vector3,
+	type MeshStandardMaterialParameters,
+	Material,
+	MeshStandardMaterial
+} from 'three';
 import { pathTracingState } from './state';
 import type { PathTracingBox } from './pathTracingTypes';
 import { get } from 'svelte/store';
 
-const getMaterial = (material: any) => {
-	return { type: 1, color: [1, 0, 0] };
+const getMaterial = (material: MeshStandardMaterial) => {
+	const { r, g, b } = material.color || { r: 0, g: 0, b: 0 };
+	return { type: 1, color: [r, g, b] };
 };
 
 const getPathTracingBox = (mesh: Mesh) => {
