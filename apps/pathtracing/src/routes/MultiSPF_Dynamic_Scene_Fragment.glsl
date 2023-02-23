@@ -162,10 +162,13 @@ float SceneIntersect(out int finalIsRayExiting)
       break;
 
     if(dBoxTypes[i] > 0) {
-      d = BoxIntersect(dBoxMinCorners[i], dBoxMaxCorners[i], rayOrigin, rayDirection, n, isRayExiting);
+      rObjOrigin = vec3(dBoxInvMatrices[i] * vec4(rayOrigin, 1.0));
+      rObjDirection = vec3(dBoxInvMatrices[i] * vec4(rayDirection, 0.0));
+      d = BoxIntersect(dBoxMinCorners[i], dBoxMaxCorners[i], rObjOrigin, rObjDirection, n, isRayExiting);
       if(d < t) {
         t = d;
-        hitNormal = n;
+        // hitNormal = n;
+        hitNormal = transpose(mat3(dBoxInvMatrices[i])) * n;
         hitEmission = vec3(0.5);
         hitColor = dBoxColors[i];
         hitType = dBoxTypes[i];

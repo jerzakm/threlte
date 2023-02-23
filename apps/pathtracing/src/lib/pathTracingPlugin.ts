@@ -16,6 +16,7 @@ const setBox = (id: string, ref: any) => {
 };
 
 const getPathTracingBox = (mesh: Mesh) => {
+	mesh.updateMatrixWorld();
 	const geometry: BoxGeometry = mesh.geometry;
 
 	const { type, color } = getMaterial(mesh.material);
@@ -26,14 +27,14 @@ const getPathTracingBox = (mesh: Mesh) => {
 	const box: PathTracingBox = {
 		emission: [0, 0, 0],
 		minCorner: [
-			mesh.position.x - geometry.parameters.width / 2,
-			mesh.position.y - geometry.parameters.height / 2,
-			mesh.position.z - geometry.parameters.depth / 2
+			-geometry.parameters.width / 2,
+			-geometry.parameters.height / 2,
+			-geometry.parameters.depth / 2
 		],
 		maxCorner: [
-			mesh.position.x + geometry.parameters.width / 2,
-			mesh.position.y + geometry.parameters.height / 2,
-			mesh.position.z + geometry.parameters.depth / 2
+			geometry.parameters.width / 2,
+			geometry.parameters.height / 2,
+			geometry.parameters.depth / 2
 		],
 		type,
 		invMatrix: invMatrix.toArray(),
