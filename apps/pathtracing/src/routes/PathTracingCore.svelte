@@ -253,7 +253,8 @@
 		pathTracingUniforms.uSkyLightIntensity = { value: skyLightIntensity };
 		pathTracingUniforms.uSunLightIntensity = { value: sunLightIntensity };
 		pathTracingUniforms.uSunColor = { value: new THREE.Color().fromArray(sunColor.map((x) => x)) };
-		pathTracingUniforms.uSunDirection = { value: sunDirection };
+		pathTracingUniforms.uSunDirectionVector = { value: sunDirection };
+		pathTracingUniforms.uHDRI_Exposure = { value: hdrExposure };
 
 		window.addEventListener('resize', onWindowResize, false);
 		// this 'jumpstarts' the initial dimensions and parameters for the window and renderer

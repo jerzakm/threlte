@@ -42,8 +42,8 @@
 {/each}
 
 <AutoColliders>
-	<T.Mesh ptDynamic ptMaterial={ptMaterials.DIFF}>
-		<T.BoxGeometry args={[500, 1, 500]} />
+	<T.Mesh ptDynamic ptMaterial={ptMaterials.SPEC}>
+		<T.BoxGeometry args={[100, 1, 100]} />
 		<T.MeshBasicMaterial color="white" wireframe transparent opacity={0} />
 	</T.Mesh>
 </AutoColliders>
