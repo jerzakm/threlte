@@ -3,6 +3,7 @@ import type { OrthographicCamera, PerspectiveCamera, Scene } from 'three';
 import type { PathTracingBox } from './pathTracingTypes';
 
 const sceneInitiated = writable(false);
+const debug = writable(false);
 const pathTracingScene = writable<Scene | undefined>(undefined);
 const screenCopyScene = writable<Scene | undefined>(undefined);
 const screenOutputScene = writable<Scene | undefined>(undefined);
@@ -16,7 +17,8 @@ export const sharedState = {
 	screenCopyScene,
 	screenOutputScene,
 	sceneCamera,
-	outputCamera
+	outputCamera,
+	debug
 };
 
 export const pathTracingState = {
