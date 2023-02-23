@@ -11,7 +11,6 @@
 	import type { Mesh } from 'three';
 	import { sharedState } from '$lib/state';
 	import { pathTracingState } from '$lib/state';
-	import { Vector3 } from 'three';
 	import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 
 	const {
@@ -26,10 +25,10 @@
 	const { pathTracingBoxes } = pathTracingState;
 
 	initPathTracingCommons();
-	const PIXEL_RATIO = 0.75;
-	const SAMPLES_PER_FRAME = 20;
-	const BLEND_WEIGHT = 0.75;
-	const EPS_intersect = 0.5;
+	const PIXEL_RATIO = 1;
+	const SAMPLES_PER_FRAME = 12;
+	const BLEND_WEIGHT = 0.5;
+	const EPS_intersect = 0.01;
 
 	let SCREEN_WIDTH;
 	let SCREEN_HEIGHT;
@@ -228,13 +227,82 @@
 		const hdrLoader = new RGBELoader();
 		hdrLoader.type = THREE.FloatType; // override THREE's default of HalfFloatType
 
-		const hdrPath = 'textures/daytime.hdr';
+		// const hdrPath = 'textures/daytime.hdr';
+		const hdrPath = 'shanghai_riverside_1k.hdr';
+
+		const sunDirection = new THREE.Vector3();
+
+		// sunDirection.set(Math.cos(sunAngle) * 1.2, Math.sin(sunAngle), -Math.cos(sunAngle) * 3.0);
+		// sunDirection.normalize();
 
 		const hdrTexture = hdrLoader.load(hdrPath, function (texture, textureData) {
 			texture.encoding = THREE.LinearEncoding;
-			texture.minFilter = THREE.NearestFilter;
-			texture.magFilter = THREE.NearestFilter;
-			texture.flipY = true;
+			texture.minFilter = THREE.LinearFilter;
+			texture.magFilter = THREE.LinearFilter;
+			texture.generateMipmaps = false;
+			texture.flipY = false;
+
+			const hdrImgWidth = texture.image.width;
+			const hdrImgHeight = texture.image.height;
+			const hdrImgData = texture.image.data;
+			let dataLength = hdrImgData.length;
+			let red, green, blue;
+
+			let texel = 0;
+			let max = 0;
+			for (let i = 0; i < dataLength; i += 4) {
+				red = hdrImgData[i + 0];
+				green = hdrImgData[i + 1];
+				blue = hdrImgData[i + 2];
+
+				if (max < red) {
+					texel = i;
+					max = red;
+				}
+				if (max < green) {
+					texel = i;
+					max = green;
+				}
+				if (max < blue) {
+					texel = i;
+					max = blue;
+				}
+			}
+
+			console.log('brightest texel index: ' + texel + ' | max luminance value: ' + max);
+			// the raw flat array has 4 elements (R,G,B,A) for every single pixel, but we just want the index of the brightest pixel
+			// so divide the brightest pixel array index by 4, in order to get back to the '0 to hdrImgWidth*hdrImgHeight' range
+			texel /= 4;
+
+			// map this texel's 1D array index into 2D (x and y) coordinates
+			const brightestPixelX = texel % hdrImgWidth;
+			const brightestPixelY = Math.floor(texel / hdrImgWidth);
+
+			console.log('brightestPixelX: ' + brightestPixelX + ' brightestPixelY: ' + brightestPixelY); // for debug
+
+			/*  
+    HDRI image dimensions: (hdrImgWidth x hdrImgHeight)
+    center of brightest pixel location: (brightestPixelX, brightestPixelY) 
+    now normalize into float (u,v) texture coords, range: (0.0-1.0, 0.0-1.0)
+    HDRI_bright_u = brightestPixelX / hdrImgWidth
+    HDRI_bright_v = brightestPixelY / hdrImgHeight
+  	
+    Must map these brightest-light texture location(u, v) coordinates to Spherical coordinates(phi, theta):
+    phi   = HDRI_bright_v * PI   note: V is used for phi
+    theta = HDRI_bright_u * 2PI  note: U is used for theta
+    lastly, convert Spherical coordinates into 3D Cartesian coordinates(x, y, z):
+    sunDirectionVector.setFromSphericalCoords(1, phi, theta);
+    */
+
+			const HDRI_bright_u = brightestPixelX / hdrImgWidth;
+			const HDRI_bright_v = brightestPixelY / hdrImgHeight;
+
+			const phi = HDRI_bright_v * Math.PI; // use 'v'
+			const theta = HDRI_bright_u * 2 * Math.PI; // use 'u'
+
+			sunDirection.setFromSphericalCoords(1, phi, theta); // 1 = radius of 1, or unit sphere
+			// finally, x must be negated, I believe because of three.js' R-handed coordinate system
+			sunDirection.x *= -1;
 		});
 
 		// Environment variables
@@ -243,11 +311,6 @@
 			sunColor = [1.0, 0.98, 0.92],
 			sunAngle = Math.PI / 2.5,
 			hdrExposure = 1.0;
-
-		const sunDirection = new THREE.Vector3();
-
-		sunDirection.set(Math.cos(sunAngle) * 1.2, Math.sin(sunAngle), -Math.cos(sunAngle) * 3.0);
-		sunDirection.normalize();
 
 		pathTracingUniforms.tHDRTexture = { value: hdrTexture };
 		pathTracingUniforms.uSkyLightIntensity = { value: skyLightIntensity };

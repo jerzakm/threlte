@@ -314,7 +314,6 @@ vec3 CalculateRadiance(out vec3 objectNormal, out vec3 objectColor, out float ob
 	//float P, RP, TP;
   float weight;
   float thickness = 0.1;
-  float roughness = 0.0;
 
   int diffuseCount = 0;
   int previousIntersecType = -100;
@@ -330,7 +329,7 @@ vec3 CalculateRadiance(out vec3 objectNormal, out vec3 objectColor, out float ob
     previousIntersecType = hitType;
 
     t = SceneIntersect(isRayExiting);
-    float roughness = 1.;
+    float roughness = 0.1;
 
     if(t == INFINITY) {
       vec3 environmentCol = Get_HDR_Color(rayDirection);
