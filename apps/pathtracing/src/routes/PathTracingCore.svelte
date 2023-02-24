@@ -26,9 +26,9 @@
 
 	initPathTracingCommons();
 	const PIXEL_RATIO = 1;
-	const SAMPLES_PER_FRAME = 12;
-	const BLEND_WEIGHT = 0.5;
-	const EPS_intersect = 0.01;
+	const SAMPLES_PER_FRAME = 4;
+	const BLEND_WEIGHT = 0.3;
+	const EPS_intersect = 1.01;
 
 	let SCREEN_WIDTH;
 	let SCREEN_HEIGHT;
@@ -310,7 +310,7 @@
 			sunLightIntensity = 2.0,
 			sunColor = [1.0, 0.98, 0.92],
 			sunAngle = Math.PI / 2.5,
-			hdrExposure = 1.0;
+			hdrExposure = 3.0;
 
 		pathTracingUniforms.tHDRTexture = { value: hdrTexture };
 		pathTracingUniforms.uSkyLightIntensity = { value: skyLightIntensity };

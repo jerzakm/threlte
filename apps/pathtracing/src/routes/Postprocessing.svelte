@@ -1,8 +1,19 @@
 <script lang="ts">
 	import { useThrelte } from '@threlte/core';
-	import { BloomEffect, EffectComposer, EffectPass, KernelSize, RenderPass } from 'postprocessing';
+	import {
+		BlendFunction,
+		BloomEffect,
+		Effect,
+		EffectComposer,
+		EffectPass,
+		KernelSize,
+		RenderPass
+	} from 'postprocessing';
 	import { onDestroy } from 'svelte';
 	import { sharedState } from '$lib/state';
+	import { Uniform } from 'three';
+	import { Vector3 } from 'three';
+	import { default as denoiseFrag } from './_denoise3.frag?raw';
 
 	const ctx = useThrelte();
 
@@ -19,6 +30,11 @@
 	const addComposerAndPasses = () => {
 		composer.removeAllPasses();
 
+		const denoise = new Effect('denoiseEffect', denoiseFrag, {
+			blendFunction: BlendFunction.NORMAL,
+			uniforms: new Map([['weights', new Uniform(new Vector3(1, 0, 0))]])
+		});
+
 		bloomEffect = new BloomEffect({
 			intensity: 8,
 			luminanceThreshold: 0.75,
@@ -30,10 +46,12 @@
 		});
 		bloomEffect.luminancePass.enabled = true;
 
+		// const denoiseEffect = new DenoiseEffect();
+
 		composer.addPass(new RenderPass($screenOutputScene, $outputCamera));
 		composer.addPass(new RenderPass($screenOutputScene, $outputCamera));
 
-		// composer.addPass(new EffectPass($camera, bloomEffect));
+		// composer.addPass(new EffectPass($camera, denoise));
 	};
 
 	$: if (renderer && $camera && $screenOutputScene) {

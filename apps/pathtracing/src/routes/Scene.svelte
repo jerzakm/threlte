@@ -24,9 +24,9 @@
 	</AutoColliders>
 </RigidBody>
 
-{#each { length: 10 } as b, x}
+{#each { length: 14 } as b, x}
 	{@const angle = (360 / (x + 1)) * DEG2RAD}
-	<RigidBody position={[Math.cos(angle) * 20, 50 + x * 9, Math.sin(angle) * 20]}>
+	<RigidBody position={[Math.cos(angle) * 40, 5 + x * 10, -Math.sin(angle) * 40]}>
 		<AutoColliders shape={'convexHull'}>
 			<T.Mesh ptDynamic ptMaterial={ptMaterials.COAT}>
 				<T.BoxGeometry args={[8, 8, 8]} />
@@ -43,7 +43,7 @@
 
 <AutoColliders>
 	<T.Mesh ptDynamic ptMaterial={ptMaterials.DIFF}>
-		<T.BoxGeometry args={[100, 1, 100]} />
+		<T.BoxGeometry args={[200, 1, 200]} />
 		<T.MeshBasicMaterial color="white" wireframe transparent opacity={0} />
 	</T.Mesh>
 </AutoColliders>
