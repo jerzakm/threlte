@@ -11,7 +11,7 @@ uniform vec3 weights;
 // https://www.shadertoy.com/view/3dd3Wr
 
 #define SAMPLES 80  // HIGHER = NICER = SLOWER
-#define DISTRIBUTION_BIAS 0.5 // between 0. and 1.
+#define DISTRIBUTION_BIAS 0.1 // between 0. and 1.
 #define PIXEL_MULTIPLIER  2.5 // between 1. and 3. (keep low)
 #define INVERSE_HUE_TOLERANCE 30.0 // (2. - 30.)
 
