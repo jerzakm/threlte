@@ -4,6 +4,7 @@ import type { PathTracingBox } from './pathTracingTypes';
 
 const sceneInitiated = writable(false);
 const debug = writable(false);
+const cameraIsMoving = writable(false);
 const pathTracingScene = writable<Scene | undefined>(undefined);
 const screenCopyScene = writable<Scene | undefined>(undefined);
 const screenOutputScene = writable<Scene | undefined>(undefined);
@@ -18,7 +19,8 @@ export const sharedState = {
 	screenOutputScene,
 	sceneCamera,
 	outputCamera,
-	debug
+	debug,
+	cameraIsMoving
 };
 
 export const pathTracingState = {
