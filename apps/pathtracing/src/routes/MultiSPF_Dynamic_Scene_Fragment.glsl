@@ -677,5 +677,5 @@ void main(void) {
     currentPixel.rgb *= 0.5;
   }
 
-  pc_fragColor = vec4(previousPixel.rgb + currentPixel.rgb, 1.01); // 1.01 is a signal to screenOutputShader to skip noise blur-filtering    
+  pc_fragColor = vec4(previousPixel.rgb + currentPixel.rgb, 1.0); // 1.01 is a signal to screenOutputShader to skip noise blur-filtering    
 }

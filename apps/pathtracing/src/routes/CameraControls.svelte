@@ -14,7 +14,8 @@
 		screenCopyScene,
 		screenOutputScene,
 		sceneCamera,
-		outputCamera
+		outputCamera,
+		cameraIsMoving
 	} = sharedState;
 
 	const { renderer } = useThrelte();
@@ -31,8 +32,11 @@
 	const mouseSensitivity = 0.002;
 
 	window.addEventListener('mousemove', (e) => {
-		mouseMove.x += e.movementX;
-		mouseMove.y += e.movementY;
+		if (document.pointerLockElement) {
+			mouseMove.x += e.movementX;
+			mouseMove.y += e.movementY;
+			cameraIsMoving.set(true);
+		}
 	});
 
 	renderer?.domElement.addEventListener('click', async () => {

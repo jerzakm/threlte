@@ -15,18 +15,16 @@
 	});
 </script>
 
-<RigidBody position={[-2.5, 50, 2.5]} rotation={[45 * DEG2RAD, 0, 45 * DEG2RAD]}>
-	<AutoColliders shape={'convexHull'}>
-		<T.Mesh ptDynamic ptMaterial={ptMaterials.COAT}>
-			<T.BoxGeometry args={[20, 20, 20]} />
-			<T.MeshBasicMaterial color="red" wireframe transparent opacity={0} />
-		</T.Mesh>
-	</AutoColliders>
-</RigidBody>
+<AutoColliders shape={'convexHull'} position={[-2.5, 5, 2.5]} rotation={[45 * DEG2RAD, 0, 0]}>
+	<T.Mesh ptDynamic ptMaterial={ptMaterials.REFR}>
+		<T.BoxGeometry args={[90, 30, 30]} />
+		<T.MeshBasicMaterial color="red" wireframe transparent opacity={0} />
+	</T.Mesh>
+</AutoColliders>
 
 {#each { length: 14 } as b, x}
-	{@const angle = (360 / (x + 1)) * DEG2RAD}
-	<RigidBody position={[Math.cos(angle) * 40, 5 + x * 10, -Math.sin(angle) * 40]}>
+	{@const angle = (360 / 14) * x * DEG2RAD}
+	<RigidBody position={[Math.cos(angle) * 40, 5 + x * 10, -Math.sin(angle) * 10]}>
 		<AutoColliders shape={'convexHull'}>
 			<T.Mesh ptDynamic ptMaterial={ptMaterials.COAT}>
 				<T.BoxGeometry args={[8, 8, 8]} />

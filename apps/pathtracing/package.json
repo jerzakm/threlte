@@ -19,7 +19,7 @@
 		"@theatre/studio": "0.5.1-rc.1",
 		"@threlte/core": "workspace:*",
 		"@threlte/extras": "workspace:*",
-		"@threlte/preprocess": "workspace:*",
+		"@threlte/preprocess": "^0.0.2",
 		"@threlte/rapier": "workspace:*",
 		"@threlte/theatre": "workspace:*",
 		"@tweakpane/core": "^1.1.0",

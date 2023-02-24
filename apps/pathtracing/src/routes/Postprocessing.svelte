@@ -13,7 +13,8 @@
 	import { sharedState } from '$lib/state';
 	import { Uniform } from 'three';
 	import { Vector3 } from 'three';
-	import { default as denoiseFrag } from './_denoise3.frag?raw';
+	import { default as denoiseFrag } from './_denoise1.frag?raw';
+	import { default as doggyFrag } from './_doggy.frag?raw';
 
 	const ctx = useThrelte();
 
@@ -30,7 +31,12 @@
 	const addComposerAndPasses = () => {
 		composer.removeAllPasses();
 
-		const denoise = new Effect('denoiseEffect', denoiseFrag, {
+		const blur = new Effect('denoiseEffect', denoiseFrag, {
+			blendFunction: BlendFunction.NORMAL,
+			uniforms: new Map([['weights', new Uniform(new Vector3(1, 0, 0))]])
+		});
+
+		const doggy = new Effect('doggyEffect', doggyFrag, {
 			blendFunction: BlendFunction.NORMAL,
 			uniforms: new Map([['weights', new Uniform(new Vector3(1, 0, 0))]])
 		});
@@ -51,7 +57,9 @@
 		composer.addPass(new RenderPass($screenOutputScene, $outputCamera));
 		composer.addPass(new RenderPass($screenOutputScene, $outputCamera));
 
-		// composer.addPass(new EffectPass($camera, denoise));
+		// composer.addPass(new EffectPass($camera, doggy));
+		// composer.addPass(new EffectPass($camera, blur));
+		// composer.addPass(new EffectPass($camera, blur));
 	};
 
 	$: if (renderer && $camera && $screenOutputScene) {
