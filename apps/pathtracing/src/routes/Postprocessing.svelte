@@ -6,14 +6,16 @@
 		Effect,
 		EffectComposer,
 		EffectPass,
+		FXAAEffect,
 		KernelSize,
+		PixelationEffect,
 		RenderPass
 	} from 'postprocessing';
 	import { onDestroy } from 'svelte';
 	import { sharedState } from '$lib/state';
 	import { Uniform } from 'three';
 	import { Vector3 } from 'three';
-	import { default as denoiseFrag } from './_denoise1.frag?raw';
+	import { default as denoiseFrag } from './_denoise3.frag?raw';
 	import { default as doggyFrag } from './_doggy.frag?raw';
 
 	const ctx = useThrelte();
@@ -41,6 +43,12 @@
 			uniforms: new Map([['weights', new Uniform(new Vector3(1, 0, 0))]])
 		});
 
+		const fxaa = new FXAAEffect({
+			blendFunction: BlendFunction.NORMAL
+		});
+
+		const pixelate = new PixelationEffect(1);
+
 		bloomEffect = new BloomEffect({
 			intensity: 4,
 			luminanceThreshold: 0.85,
@@ -56,7 +64,7 @@
 		composer.addPass(new RenderPass($screenOutputScene, $outputCamera));
 
 		composer.addPass(new EffectPass($camera, bloomEffect));
-		// composer.addPass(new EffectPass($camera, blur));
+		composer.addPass(new EffectPass($camera, blur, fxaa));
 		// composer.addPass(new EffectPass($camera, doggy));
 	};
 

@@ -61,7 +61,9 @@
 		mouseMove.x = 0;
 		mouseMove.y = 0;
 
-		$sceneCamera.quaternion.copy(q);
+		if (document.pointerLockElement) {
+			$sceneCamera.quaternion.copy(q);
+		}
 
 		if ($w || $a || $s || $d) {
 			cameraRotation.setFromQuaternion($sceneCamera.quaternion);

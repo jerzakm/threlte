@@ -25,7 +25,7 @@
 	const { pathTracingBoxes } = pathTracingState;
 
 	initPathTracingCommons();
-	const PIXEL_RATIO = 0.75;
+	const PIXEL_RATIO = 1;
 	const SAMPLES_PER_FRAME = 4;
 	const BLEND_WEIGHT = 0.2;
 	const EPS_intersect = 0.01;
@@ -462,8 +462,10 @@
 <T.PerspectiveCamera
 	args={[60, window.innerWidth / window.innerHeight, 1, 1000]}
 	bind:ref={worldCamera}
-	position.y={10}
-	position.z={60}
+	position.x={50}
+	position.y={50}
+	position.z={-70}
+	rotation={[-2.5, 0.4, 2.8]}
 />
 
 <T.Scene bind:ref={$pathTracingScene}>

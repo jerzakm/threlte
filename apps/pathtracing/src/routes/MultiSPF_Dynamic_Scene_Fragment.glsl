@@ -783,8 +783,8 @@ void SetupScene(void)
   vec3 L2 = vec3(1.0, 1.0, 1.0) * 40.0;//10.0;// red light
   vec3 L3 = vec3(0.1, 0.7, 1.0) * 15.0;//5.0; // Blue light
 
-  spheres[0] = Sphere(150.0, vec3(-600, 100, 600), L1, z, LIGHT);//spherical white Light1 
-  spheres[1] = Sphere(10.0, vec3(0, 20, 0), L2, z, LIGHT);//spherical yellow Light2
+  spheres[0] = Sphere(150.0, vec3(-600, 200, 600), L1, z, LIGHT);//spherical white Light1 
+  spheres[1] = Sphere(3.0, vec3(0, 25, 0), L2, z, LIGHT);//spherical yellow Light2
   spheres[2] = Sphere(50.0, vec3(500, 250, -100), L3, z, LIGHT);//spherical blue Light3
   spheres[3] = Sphere(2000.0, vec3(0.0, 1000.0, 0.0), vec3(1.0, 1.0, 1.0), vec3(1.), DIFF);//Checkered Floor
 
