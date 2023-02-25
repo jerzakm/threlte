@@ -6,7 +6,7 @@
 	import { Euler } from 'three';
 	import { Quaternion } from 'three';
 	import { Vector3 } from 'three';
-	import { sharedState } from '$lib/state';
+	import { sharedState, pathTracingState } from '$lib/state';
 
 	const {
 		sceneInitiated,
@@ -14,9 +14,10 @@
 		screenCopyScene,
 		screenOutputScene,
 		sceneCamera,
-		outputCamera,
-		cameraIsMoving
+		outputCamera
 	} = sharedState;
+
+	const { cameraIsMoving } = pathTracingState;
 
 	const { renderer } = useThrelte();
 
@@ -93,6 +94,10 @@
 
 			if ($d) {
 				strafe += 1;
+			}
+
+			if (strafe > 0 || forward > 0) {
+				cameraIsMoving.set(true);
 			}
 
 			const direction = new Vector3(strafe, 0, forward);

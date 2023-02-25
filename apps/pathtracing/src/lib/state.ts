@@ -19,10 +19,10 @@ export const sharedState = {
 	screenOutputScene,
 	sceneCamera,
 	outputCamera,
-	debug,
-	cameraIsMoving
+	debug
 };
 
 export const pathTracingState = {
-	pathTracingBoxes
+	pathTracingBoxes,
+	cameraIsMoving
 };

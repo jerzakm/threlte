@@ -6,11 +6,10 @@
 	import { T, useFrame, useThrelte } from '@threlte/core';
 	import * as THREE from 'three';
 	import type { MeshBasicMaterial, OrthographicCamera, PerspectiveCamera } from 'three';
-	import { default as scenePathTracingShader } from './MultiSPF_Dynamic_Scene_Fragment.glsl?raw';
+	import { default as scenePathTracingShader } from './Shafts.glsl?raw';
 
 	import type { Mesh } from 'three';
-	import { sharedState } from '$lib/state';
-	import { pathTracingState } from '$lib/state';
+	import { sharedState, pathTracingState } from '$lib/state';
 	import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 
 	const {
@@ -22,13 +21,13 @@
 		sceneCamera
 	} = sharedState;
 
-	const { pathTracingBoxes } = pathTracingState;
+	const { pathTracingBoxes, cameraIsMoving } = pathTracingState;
 
 	initPathTracingCommons();
 	const PIXEL_RATIO = 1;
 	const SAMPLES_PER_FRAME = 4;
 	const BLEND_WEIGHT = 0.2;
-	const EPS_intersect = 0.01;
+	const EPS_intersect = 0.001;
 
 	let SCREEN_WIDTH;
 	let SCREEN_HEIGHT;
@@ -49,14 +48,13 @@
 	let clock: any;
 	let frameTime: any;
 	let elapsedTime: any;
-	let sceneIsDynamic = true;
+	let sceneIsDynamic = false;
 	let fovScale;
 
 	let apertureSize = 0.0;
 	let focusDistance = 132.0;
 	let sampleCounter = 0.0; // will get increased by 1 in animation loop before rendering
 	let frameCounter = 1.0; // 1 instead of 0 because it is used as a rng() seed in pathtracing shader
-	let cameraIsMoving = false;
 	let cameraRecentlyMoving = false;
 
 	let blueNoiseTexture;
@@ -332,7 +330,7 @@
 		elapsedTime = clock.getElapsedTime() % 1000;
 
 		// reset flags
-		cameraIsMoving = false;
+		// cameraIsMoving.set(false)
 
 		// the following gives us a rotation quaternion (4D vector), which will be useful for
 		// rotating scene objects to match the camera's rotation
@@ -341,7 +339,7 @@
 		updateVariablesAndUniforms();
 
 		// now update uniforms that are common to all scenes
-		if (!cameraIsMoving) {
+		if (!$cameraIsMoving) {
 			if (sceneIsDynamic) sampleCounter = 1.0; // reset for continuous updating of image
 			else sampleCounter += 1.0; // for progressive refinement of image
 
@@ -350,7 +348,7 @@
 			cameraRecentlyMoving = false;
 		}
 
-		if (cameraIsMoving) {
+		if ($cameraIsMoving) {
 			frameCounter += 1.0;
 
 			if (!cameraRecentlyMoving) {
@@ -364,7 +362,7 @@
 		}
 
 		pathTracingUniforms.uTime.value = elapsedTime;
-		pathTracingUniforms.uCameraIsMoving.value = cameraIsMoving;
+		pathTracingUniforms.uCameraIsMoving.value = $cameraIsMoving;
 		pathTracingUniforms.uSampleCounter.value = sampleCounter;
 		pathTracingUniforms.uFrameCounter.value = frameCounter;
 		pathTracingUniforms.uRandomVec2.value.set(Math.random(), Math.random());
@@ -396,6 +394,8 @@
 		// After applying tonemapping and gamma-correction to the image, it will be shown on the screen as the final accumulated output
 		// renderer.setRenderTarget(null);
 		// renderer.render($screenOutputScene, quadCamera);
+
+		cameraIsMoving.set(false);
 	} // end function animate()
 
 	// scene/demo-specific variables go here
