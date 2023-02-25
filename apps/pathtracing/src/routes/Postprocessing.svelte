@@ -42,24 +42,22 @@
 		});
 
 		bloomEffect = new BloomEffect({
-			intensity: 8,
-			luminanceThreshold: 0.75,
-			height: 1024,
-			width: 1024,
+			intensity: 4,
+			luminanceThreshold: 0.85,
+			height: 256,
+			width: 256,
 			luminanceSmoothing: 0.01,
 			mipmapBlur: true,
-			kernelSize: KernelSize.MEDIUM
+			kernelSize: KernelSize.VERY_SMALL
 		});
-		bloomEffect.luminancePass.enabled = true;
-
-		// const denoiseEffect = new DenoiseEffect();
+		// bloomEffect.luminancePass.enabled = true;
 
 		composer.addPass(new RenderPass($screenOutputScene, $outputCamera));
 		composer.addPass(new RenderPass($screenOutputScene, $outputCamera));
 
+		composer.addPass(new EffectPass($camera, bloomEffect));
+		// composer.addPass(new EffectPass($camera, blur));
 		// composer.addPass(new EffectPass($camera, doggy));
-		// composer.addPass(new EffectPass($camera, blur));
-		// composer.addPass(new EffectPass($camera, blur));
 	};
 
 	$: if (renderer && $camera && $screenOutputScene) {

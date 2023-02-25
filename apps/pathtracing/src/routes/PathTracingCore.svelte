@@ -25,9 +25,9 @@
 	const { pathTracingBoxes } = pathTracingState;
 
 	initPathTracingCommons();
-	const PIXEL_RATIO = 1;
+	const PIXEL_RATIO = 0.75;
 	const SAMPLES_PER_FRAME = 4;
-	const BLEND_WEIGHT = 0.6;
+	const BLEND_WEIGHT = 0.2;
 	const EPS_intersect = 0.01;
 
 	let SCREEN_WIDTH;
@@ -49,7 +49,7 @@
 	let clock: any;
 	let frameTime: any;
 	let elapsedTime: any;
-	let sceneIsDynamic = false;
+	let sceneIsDynamic = true;
 	let fovScale;
 
 	let apertureSize = 0.0;

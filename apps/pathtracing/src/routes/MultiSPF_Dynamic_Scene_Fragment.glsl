@@ -293,10 +293,220 @@ float SceneIntersect(out int finalIsRayExiting)
   return t;
 
 } // end float SceneIntersect(out int finalIsRayExiting)
+//-----------------------------------------------------------------------------------------------------------------------------
+vec3 CalculateRadiance(out vec3 objectNormal, out vec3 objectColor, out float objectID, out float pixelSharpness)
+//-----------------------------------------------------------------------------------------------------------------------------
+{
+  Sphere lightChoice;
+
+  vec3 accumCol = vec3(0);
+  vec3 mask = vec3(1);
+  vec3 checkCol0 = vec3(1);
+  vec3 checkCol1 = vec3(0.5);
+  vec3 dirToLight;
+  vec3 tdir;
+  vec3 x, n, nl;
+
+  float t;
+  float nc, nt, ratioIoR, Re, Tr;
+  float P, RP, TP;
+  float weight;
+  float thickness = 0.1;
+
+  int diffuseCount = 0;
+  int previousIntersecType = -100;
+  hitType = -100;
+
+  int coatTypeIntersected = FALSE;
+  int bounceIsSpecular = TRUE;
+  int sampleLight = FALSE;
+  int isRayExiting;
+
+  lightChoice = spheres[int(rng() * N_LIGHTS)];
+
+  for(int bounces = 0; bounces < 6; bounces++) {
+    previousIntersecType = hitType;
+
+    t = SceneIntersect(isRayExiting);
+
+		/*
+		//not used in this scene because we are inside a huge sphere - no rays can escape
+		if (t == INFINITY)
+		{
+                        break;
+		}
+		*/
+
+		// useful data 
+    n = normalize(hitNormal);
+    nl = dot(n, rayDirection) < 0.0 ? n : -n;
+    x = rayOrigin + rayDirection * t;
+
+    if(bounces == 0) {
+      objectNormal = nl;
+      objectColor = hitColor;
+      objectID = hitObjectID;
+    }
+
+    if(hitType == LIGHT) {
+      if(bounceIsSpecular == TRUE || sampleLight == TRUE)
+        accumCol = mask * hitEmission;
+			// reached a light, so we can exit
+      break;
+    } // end if (hitType == LIGHT)
+
+    if(sampleLight == TRUE)
+      break;
+
+    if(hitType == DIFF || hitType == CHECK) // Ideal DIFFUSE reflection
+    {
+      if(hitType == CHECK) {
+        float q = clamp(mod(dot(floor(x.xz * 0.04), vec2(1.0)), 2.0), 0.0, 1.0);
+        hitColor = checkCol0 * q + checkCol1 * (1.0 - q);
+      }
+
+      if(bounces == 0 || (diffuseCount == 0 && coatTypeIntersected == FALSE && previousIntersecType == SPEC))
+        objectColor = hitColor;
+
+      diffuseCount++;
+
+      mask *= hitColor;
+
+      bounceIsSpecular = FALSE;
+
+      if(diffuseCount == 1 && rand() < 0.5) {
+        mask *= 2.0;
+				// choose random Diffuse sample vector
+        rayDirection = randomCosWeightedDirectionInHemisphere(nl);
+        rayOrigin = x + nl * uEPS_intersect;
+        continue;
+      }
+
+      dirToLight = sampleSphereLight(x, nl, lightChoice, weight);
+      mask *= diffuseCount == 1 ? 2.0 : 1.0;
+      mask *= weight * N_LIGHTS;
+
+      rayDirection = dirToLight;
+      rayOrigin = x + nl * uEPS_intersect;
+
+      sampleLight = TRUE;
+      continue;
+
+    } // end if (hitType == DIFF)
+
+    if(hitType == SPEC)  // Ideal SPECULAR reflection
+    {
+      mask *= hitColor;
+
+      rayDirection = reflect(rayDirection, nl);
+      rayOrigin = x + nl * uEPS_intersect;
+
+			//if (diffuseCount == 1)
+			//	bounceIsSpecular = TRUE; // turn on reflective mirror caustics
+
+      continue;
+    }
+
+    if(hitType == REFR)  // Ideal dielectric REFRACTION
+    {
+
+      nc = 1.0; // IOR of Air
+      nt = 1.5; // IOR of common Glass
+      Re = calcFresnelReflectance(rayDirection, n, nc, nt, ratioIoR);
+      Tr = 1.0 - Re;
+      P = 0.25 + (0.5 * Re);
+      RP = Re / P;
+      TP = Tr / (1.0 - P);
+
+      if(diffuseCount == 0 && rng() < P) {
+        mask *= RP;
+        rayDirection = reflect(rayDirection, nl); // reflect ray from surface
+        rayOrigin = x + nl * uEPS_intersect;
+        continue;
+      }
+
+			// transmit ray through surface
+
+			// is ray leaving a solid object from the inside? 
+			// If so, attenuate ray color with object color by how far ray has travelled through the medium
+      if(isRayExiting == TRUE) {
+        isRayExiting = FALSE;
+        mask *= exp(log(hitColor) * thickness * t);
+      } else
+        mask *= hitColor;
+
+      mask *= TP;
+
+      tdir = refract(rayDirection, nl, ratioIoR);
+      rayDirection = tdir;
+      rayOrigin = x - nl * uEPS_intersect;
+
+      if(diffuseCount == 1)
+        bounceIsSpecular = TRUE; // turn on refracting caustics
+
+      continue;
+
+    } // end if (hitType == REFR)
+
+    if(hitType == COAT)  // Diffuse object underneath with ClearCoat on top
+    {
+      coatTypeIntersected = TRUE;
+
+      nc = 1.0; // IOR of Air
+      nt = 1.4; // IOR of Clear Coat
+      Re = calcFresnelReflectance(rayDirection, nl, nc, nt, ratioIoR);
+      Tr = 1.0 - Re;
+      P = 0.25 + (0.5 * Re);
+      RP = Re / P;
+      TP = Tr / (1.0 - P);
+
+      if(diffuseCount == 0 && rng() < P) {
+        mask *= RP;
+        rayDirection = reflect(rayDirection, nl); // reflect ray from surface
+        rayOrigin = x + nl * uEPS_intersect;
+        continue;
+      }
+
+      diffuseCount++;
+
+      mask *= TP;
+      mask *= hitColor;
+
+      bounceIsSpecular = FALSE;
+
+      if(diffuseCount == 1 && rand() < 0.5) {
+        mask *= 2.0;
+				// choose random Diffuse sample vector
+        rayDirection = randomCosWeightedDirectionInHemisphere(nl);
+        rayOrigin = x + nl * uEPS_intersect;
+        continue;
+      }
+
+      if(hitColor.r == 1.0 && rng() < 0.9) // this makes white capsule more 'white'
+        dirToLight = sampleSphereLight(x, nl, spheres[0], weight);
+      else
+        dirToLight = sampleSphereLight(x, nl, lightChoice, weight);
+
+      mask *= diffuseCount == 1 ? 2.0 : 1.0;
+      mask *= weight * N_LIGHTS;
+
+      rayDirection = dirToLight;
+      rayOrigin = x + nl * uEPS_intersect;
+
+      sampleLight = TRUE;
+      continue;
+
+    } //end if (hitType == COAT)
+
+  } // end for (int bounces = 0; bounces < 6; bounces++)
+
+  return max(vec3(0), accumCol);
+
+} // end vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float objectID, out float pixelSharpness )
 
 //-----------------------------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-vec3 CalculateRadiance(out vec3 objectNormal, out vec3 objectColor, out float objectID, out float pixelSharpness)
+vec3 CalculateRadianceHDR(out vec3 objectNormal, out vec3 objectColor, out float objectID, out float pixelSharpness)
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 {
   vec3 accumCol = vec3(0);
@@ -569,14 +779,14 @@ void SetupScene(void)
 //-----------------------------------------------------------------------
 {
   vec3 z = vec3(0);
-  vec3 L1 = vec3(1.0, 1.0, 1.0) * 93.0;//13.0;// White light
-  vec3 L2 = vec3(1.0, 0.1, 0.1) * 4.0;//10.0;// Yellow light
-  vec3 L3 = vec3(0.1, 0.7, 1.0) * 2.0;//5.0; // Blue light
+  vec3 L1 = vec3(1.0, 0.5, 0.5) * 10.0;//13.0;// White light
+  vec3 L2 = vec3(1.0, 1.0, 1.0) * 40.0;//10.0;// red light
+  vec3 L3 = vec3(0.1, 0.7, 1.0) * 15.0;//5.0; // Blue light
 
   spheres[0] = Sphere(150.0, vec3(-600, 100, 600), L1, z, LIGHT);//spherical white Light1 
-  spheres[1] = Sphere(100.0, vec3(300, 400, -300), L2, z, LIGHT);//spherical yellow Light2
+  spheres[1] = Sphere(10.0, vec3(0, 20, 0), L2, z, LIGHT);//spherical yellow Light2
   spheres[2] = Sphere(50.0, vec3(500, 250, -100), L3, z, LIGHT);//spherical blue Light3
-  // spheres[3] = Sphere(2000.0, vec3(0.0, 1000.0, 0.0), vec3(1.0, 1.0, 1.0), vec3(1.), DIFF);//Checkered Floor
+  spheres[3] = Sphere(2000.0, vec3(0.0, 1000.0, 0.0), vec3(1.0, 1.0, 1.0), vec3(1.), DIFF);//Checkered Floor
 
   // spheres[4] = Sphere(16.5, vec3(-26.0, 17.2, 5.0), z, vec3(0.95, 0.95, 0.95), SPEC);//Mirror sphere
   // spheres[5] = Sphere(15.0, vec3(sin(mod(uTime * 0.3, TWO_PI)) * 80.0, 25, cos(mod(uTime * 0.1, TWO_PI)) * 80.0), z, vec3(1.0, 1.0, 1.0), REFR);//Glass sphere
