@@ -15,7 +15,7 @@
 	import { sharedState } from '$lib/state';
 	import { Uniform } from 'three';
 	import { Vector3 } from 'three';
-	import { default as denoiseFrag } from './_denoise1.frag?raw';
+	import { default as denoiseFrag } from './_denoise2.frag?raw';
 	import { default as doggyFrag } from './_doggy.frag?raw';
 
 	const ctx = useThrelte();

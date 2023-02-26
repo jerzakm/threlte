@@ -5,7 +5,7 @@
 	import { default as ScreenOutput_Fragment } from '$lib/pathTracingShaders/ScreenOutput_Fragment.glsl?raw';
 	import { T, useFrame, useThrelte } from '@threlte/core';
 	import * as THREE from 'three';
-	import type { MeshBasicMaterial, OrthographicCamera, PerspectiveCamera } from 'three';
+	import type { OrthographicCamera, PerspectiveCamera } from 'three';
 	import { default as scenePathTracingShader } from './Shafts.glsl?raw';
 
 	import type { Mesh } from 'three';
@@ -21,16 +21,18 @@
 		sceneCamera
 	} = sharedState;
 
-	const { pathTracingBoxes, cameraIsMoving } = pathTracingState;
+	const {
+		pathTracingBoxes,
+		cameraIsMoving,
+		pixelRatio,
+		samplesPerFrame,
+		blendWeight,
+		epsIntersect,
+		rendererSize
+	} = pathTracingState;
 
 	initPathTracingCommons();
-	const PIXEL_RATIO = 1;
-	const SAMPLES_PER_FRAME = 4;
-	const BLEND_WEIGHT = 0.2;
-	const EPS_intersect = 0.001;
 
-	let SCREEN_WIDTH;
-	let SCREEN_HEIGHT;
 	let context;
 
 	let pathTracingUniforms: any = {};
@@ -73,22 +75,40 @@
 
 	const { renderer, composer } = useThrelte();
 
+	rendererSize.subscribe((size) => {
+		const [width, height] = size;
+		composer?.renderer.setSize(width, height);
+
+		if ($sceneInitiated) {
+			pathTracingUniforms.uResolution.value.x = width;
+			pathTracingUniforms.uResolution.value.y = height;
+
+			pathTracingRenderTarget.setSize(width, height);
+			screenCopyRenderTarget.setSize(width, height);
+
+			worldCamera.aspect = width / height;
+		}
+	});
+
+	pixelRatio.subscribe((p) => {
+		renderer?.setPixelRatio(p);
+		composer?.renderer.setPixelRatio(p);
+	});
+
 	function onWindowResize(event: any) {
-		SCREEN_WIDTH = window.innerWidth;
-		SCREEN_HEIGHT = window.innerHeight;
+		rendererSize.set([window.innerWidth, window.innerHeight]);
 
-		composer?.renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-		composer?.renderer.setPixelRatio(PIXEL_RATIO);
+		const [width, height] = $rendererSize;
+		pathTracingUniforms.uResolution.value.x = width;
+		pathTracingUniforms.uResolution.value.y = height;
 
-		pathTracingUniforms.uResolution.value.x = SCREEN_WIDTH;
-		pathTracingUniforms.uResolution.value.y = SCREEN_HEIGHT;
+		pathTracingRenderTarget.setSize(width, height);
+		screenCopyRenderTarget.setSize(width, height);
 
-		pathTracingRenderTarget.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-		screenCopyRenderTarget.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+		worldCamera.aspect = width / height;
 
-		worldCamera.aspect = SCREEN_WIDTH / SCREEN_HEIGHT;
 		// the following is normally used with traditional rasterized rendering, but it is not needed for our fragment shader raytraced rendering
-		///worldCamera.updateProjectionMatrix();
+		worldCamera.updateProjectionMatrix();
 
 		// the following scales all scene objects by the worldCamera's field of view,
 		// taking into account the screen aspect ratio and multiplying the uniform uULen,
@@ -171,7 +191,7 @@
 		pathTracingUniforms.dBoxMaxCorners = { value: [10, 10, 10] };
 		pathTracingUniforms.dBoxTypes = { value: [1] };
 
-		pathTracingUniforms.uEPS_intersect = { type: 'f', value: EPS_intersect };
+		pathTracingUniforms.uEPS_intersect = { type: 'f', value: $epsIntersect };
 		pathTracingUniforms.uTime = { type: 'f', value: 0.0 };
 		pathTracingUniforms.uSampleCounter = { type: 'f', value: 0.0 }; //0.0
 		pathTracingUniforms.uPreviousSampleCount = { type: 'f', value: 1.0 };
@@ -183,23 +203,6 @@
 
 		pathTracingUniforms.uCameraIsMoving = { type: 'b1', value: false };
 		pathTracingUniforms.uUseOrthographicCamera = { type: 'b1', value: false };
-
-		// pathTracingUniforms.minCorner = {
-		// 	t: 'v3',
-		// 	value: new Vector3(0, 0, 0)
-		// };
-		// pathTracingUniforms.maxCorner = {
-		// 	t: 'v3',
-		// 	value: new Vector3(20, 20, -20)
-		// };
-		// pathTracingUniforms.emission = {
-		// 	t: 'v3',
-		// 	value: new Vector3(0.5, 0.5, 0.5)
-		// };
-		// pathTracingUniforms.color = {
-		// 	t: 'v3',
-		// 	value: new Vector3(0.5, 0.25, 0)
-		// };
 
 		pathTracingDefines = {
 			//NUMBER_OF_TRIANGLES: total_number_of_triangles
@@ -233,89 +236,89 @@
 		// sunDirection.set(Math.cos(sunAngle) * 1.2, Math.sin(sunAngle), -Math.cos(sunAngle) * 3.0);
 		// sunDirection.normalize();
 
-		const hdrTexture = hdrLoader.load(hdrPath, function (texture, textureData) {
-			texture.encoding = THREE.LinearEncoding;
-			texture.minFilter = THREE.LinearFilter;
-			texture.magFilter = THREE.LinearFilter;
-			texture.generateMipmaps = false;
-			texture.flipY = false;
+		// const hdrTexture = hdrLoader.load(hdrPath, function (texture, textureData) {
+		// 	texture.encoding = THREE.LinearEncoding;
+		// 	texture.minFilter = THREE.LinearFilter;
+		// 	texture.magFilter = THREE.LinearFilter;
+		// 	texture.generateMipmaps = false;
+		// 	texture.flipY = false;
 
-			const hdrImgWidth = texture.image.width;
-			const hdrImgHeight = texture.image.height;
-			const hdrImgData = texture.image.data;
-			let dataLength = hdrImgData.length;
-			let red, green, blue;
+		// 	const hdrImgWidth = texture.image.width;
+		// 	const hdrImgHeight = texture.image.height;
+		// 	const hdrImgData = texture.image.data;
+		// 	let dataLength = hdrImgData.length;
+		// 	let red, green, blue;
 
-			let texel = 0;
-			let max = 0;
-			for (let i = 0; i < dataLength; i += 4) {
-				red = hdrImgData[i + 0];
-				green = hdrImgData[i + 1];
-				blue = hdrImgData[i + 2];
+		// 	let texel = 0;
+		// 	let max = 0;
+		// 	for (let i = 0; i < dataLength; i += 4) {
+		// 		red = hdrImgData[i + 0];
+		// 		green = hdrImgData[i + 1];
+		// 		blue = hdrImgData[i + 2];
 
-				if (max < red) {
-					texel = i;
-					max = red;
-				}
-				if (max < green) {
-					texel = i;
-					max = green;
-				}
-				if (max < blue) {
-					texel = i;
-					max = blue;
-				}
-			}
+		// 		if (max < red) {
+		// 			texel = i;
+		// 			max = red;
+		// 		}
+		// 		if (max < green) {
+		// 			texel = i;
+		// 			max = green;
+		// 		}
+		// 		if (max < blue) {
+		// 			texel = i;
+		// 			max = blue;
+		// 		}
+		// 	}
 
-			console.log('brightest texel index: ' + texel + ' | max luminance value: ' + max);
-			// the raw flat array has 4 elements (R,G,B,A) for every single pixel, but we just want the index of the brightest pixel
-			// so divide the brightest pixel array index by 4, in order to get back to the '0 to hdrImgWidth*hdrImgHeight' range
-			texel /= 4;
+		// 	console.log('brightest texel index: ' + texel + ' | max luminance value: ' + max);
+		// 	// the raw flat array has 4 elements (R,G,B,A) for every single pixel, but we just want the index of the brightest pixel
+		// 	// so divide the brightest pixel array index by 4, in order to get back to the '0 to hdrImgWidth*hdrImgHeight' range
+		// 	texel /= 4;
 
-			// map this texel's 1D array index into 2D (x and y) coordinates
-			const brightestPixelX = texel % hdrImgWidth;
-			const brightestPixelY = Math.floor(texel / hdrImgWidth);
+		// 	// map this texel's 1D array index into 2D (x and y) coordinates
+		// 	const brightestPixelX = texel % hdrImgWidth;
+		// 	const brightestPixelY = Math.floor(texel / hdrImgWidth);
 
-			console.log('brightestPixelX: ' + brightestPixelX + ' brightestPixelY: ' + brightestPixelY); // for debug
+		// 	console.log('brightestPixelX: ' + brightestPixelX + ' brightestPixelY: ' + brightestPixelY); // for debug
 
-			/*  
-    HDRI image dimensions: (hdrImgWidth x hdrImgHeight)
-    center of brightest pixel location: (brightestPixelX, brightestPixelY) 
-    now normalize into float (u,v) texture coords, range: (0.0-1.0, 0.0-1.0)
-    HDRI_bright_u = brightestPixelX / hdrImgWidth
-    HDRI_bright_v = brightestPixelY / hdrImgHeight
-  	
-    Must map these brightest-light texture location(u, v) coordinates to Spherical coordinates(phi, theta):
-    phi   = HDRI_bright_v * PI   note: V is used for phi
-    theta = HDRI_bright_u * 2PI  note: U is used for theta
-    lastly, convert Spherical coordinates into 3D Cartesian coordinates(x, y, z):
-    sunDirectionVector.setFromSphericalCoords(1, phi, theta);
-    */
+		// 	/*
+		// HDRI image dimensions: (hdrImgWidth x hdrImgHeight)
+		// center of brightest pixel location: (brightestPixelX, brightestPixelY)
+		// now normalize into float (u,v) texture coords, range: (0.0-1.0, 0.0-1.0)
+		// HDRI_bright_u = brightestPixelX / hdrImgWidth
+		// HDRI_bright_v = brightestPixelY / hdrImgHeight
 
-			const HDRI_bright_u = brightestPixelX / hdrImgWidth;
-			const HDRI_bright_v = brightestPixelY / hdrImgHeight;
+		// Must map these brightest-light texture location(u, v) coordinates to Spherical coordinates(phi, theta):
+		// phi   = HDRI_bright_v * PI   note: V is used for phi
+		// theta = HDRI_bright_u * 2PI  note: U is used for theta
+		// lastly, convert Spherical coordinates into 3D Cartesian coordinates(x, y, z):
+		// sunDirectionVector.setFromSphericalCoords(1, phi, theta);
+		// */
 
-			const phi = HDRI_bright_v * Math.PI; // use 'v'
-			const theta = HDRI_bright_u * 2 * Math.PI; // use 'u'
+		// 	const HDRI_bright_u = brightestPixelX / hdrImgWidth;
+		// 	const HDRI_bright_v = brightestPixelY / hdrImgHeight;
 
-			sunDirection.setFromSphericalCoords(1, phi, theta); // 1 = radius of 1, or unit sphere
-			// finally, x must be negated, I believe because of three.js' R-handed coordinate system
-			sunDirection.x *= -1;
-		});
+		// 	const phi = HDRI_bright_v * Math.PI; // use 'v'
+		// 	const theta = HDRI_bright_u * 2 * Math.PI; // use 'u'
+
+		// 	sunDirection.setFromSphericalCoords(1, phi, theta); // 1 = radius of 1, or unit sphere
+		// 	// finally, x must be negated, I believe because of three.js' R-handed coordinate system
+		// 	sunDirection.x *= -1;
+		// });
 
 		// Environment variables
-		const skyLightIntensity = 2.0,
-			sunLightIntensity = 2.0,
-			sunColor = [1.0, 0.98, 0.92],
-			sunAngle = Math.PI / 2.5,
-			hdrExposure = 3.0;
+		// const skyLightIntensity = 2.0,
+		// 	sunLightIntensity = 2.0,
+		// 	sunColor = [1.0, 0.98, 0.92],
+		// 	sunAngle = Math.PI / 2.5,
+		// 	hdrExposure = 3.0;
 
-		pathTracingUniforms.tHDRTexture = { value: hdrTexture };
-		pathTracingUniforms.uSkyLightIntensity = { value: skyLightIntensity };
-		pathTracingUniforms.uSunLightIntensity = { value: sunLightIntensity };
-		pathTracingUniforms.uSunColor = { value: new THREE.Color().fromArray(sunColor.map((x) => x)) };
-		pathTracingUniforms.uSunDirectionVector = { value: sunDirection };
-		pathTracingUniforms.uHDRI_Exposure = { value: hdrExposure };
+		// pathTracingUniforms.tHDRTexture = { value: hdrTexture };
+		// pathTracingUniforms.uSkyLightIntensity = { value: skyLightIntensity };
+		// pathTracingUniforms.uSunLightIntensity = { value: sunLightIntensity };
+		// pathTracingUniforms.uSunColor = { value: new THREE.Color().fromArray(sunColor.map((x) => x)) };
+		// pathTracingUniforms.uSunDirectionVector = { value: sunDirection };
+		// pathTracingUniforms.uHDRI_Exposure = { value: hdrExposure };
 
 		window.addEventListener('resize', onWindowResize, false);
 		// this 'jumpstarts' the initial dimensions and parameters for the window and renderer
@@ -329,13 +332,7 @@
 
 		elapsedTime = clock.getElapsedTime() % 1000;
 
-		// reset flags
-		// cameraIsMoving.set(false)
-
-		// the following gives us a rotation quaternion (4D vector), which will be useful for
-		// rotating scene objects to match the camera's rotation
 		worldCamera.getWorldQuaternion(cameraWorldQuaternion);
-		// update scene/demo-specific input(if custom), variables and uniforms every animation frame
 		updateVariablesAndUniforms();
 
 		// now update uniforms that are common to all scenes
@@ -344,7 +341,6 @@
 			else sampleCounter += 1.0; // for progressive refinement of image
 
 			frameCounter += 1.0;
-
 			cameraRecentlyMoving = false;
 		}
 
@@ -352,7 +348,6 @@
 			frameCounter += 1.0;
 
 			if (!cameraRecentlyMoving) {
-				// record current sampleCounter before it gets set to 1.0 below
 				pathTracingUniforms.uPreviousSampleCount.value = sampleCounter;
 				frameCounter = 1.0;
 				cameraRecentlyMoving = true;
@@ -410,8 +405,8 @@
 		// position and orient camera
 		// scene/demo-specific uniforms go here
 
-		pathTracingUniforms.uSamplesPerFrame = { value: SAMPLES_PER_FRAME };
-		pathTracingUniforms.uPreviousFrameBlendWeight = { value: BLEND_WEIGHT };
+		pathTracingUniforms.uSamplesPerFrame = { value: $samplesPerFrame };
+		pathTracingUniforms.uPreviousFrameBlendWeight = { value: $blendWeight };
 	}
 
 	let userBox: Mesh;
@@ -443,7 +438,7 @@
 	}
 
 	$: {
-		if (renderer && $screenOutputScene) {
+		if (renderer && $screenOutputScene && !$sceneInitiated) {
 			init(); // init app and start animating
 			outputCamera.set(quadCamera);
 			sceneCamera.set(worldCamera);
