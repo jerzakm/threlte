@@ -1,5 +1,4 @@
 import { useLoader, useThrelte, type AsyncWritable } from '@threlte/core'
-import { createEventDispatcher } from 'svelte'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
@@ -14,8 +13,6 @@ type UseGltfOptions = {
   useMeshopt?: boolean
   ktxTranscoderPath?: string
 }
-
-createEventDispatcher
 
 export function useGltf(options?: UseGltfOptions): {
   load: <
