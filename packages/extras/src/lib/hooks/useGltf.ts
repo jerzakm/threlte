@@ -9,9 +9,19 @@ import { buildSceneGraph, type SceneGraph } from '../lib/buildSceneGraph'
 import type { ThrelteGltf } from '../types/types'
 
 type UseGltfOptions = {
-  useDraco?: boolean | string
+  useDraco?: boolean | string | DRACOLoader
   useMeshopt?: boolean
   ktxTranscoderPath?: string
+}
+
+let defaultDracoLoaderInstance: DRACOLoader | undefined
+
+const useDefaultDracoLoader = (dracoDecoderPath?: string) => {
+  const path = dracoDecoderPath || 'https://www.gstatic.com/draco/versioned/decoders/1.4.3/'
+  console.log('using draco')
+  if (!defaultDracoLoaderInstance)
+    defaultDracoLoaderInstance = new DRACOLoader().setDecoderPath(path)
+  return defaultDracoLoaderInstance
 }
 
 export function useGltf(options?: UseGltfOptions): {
@@ -55,13 +65,16 @@ export function useGltf<
   const loader = useLoader(GLTFLoader, {
     extend(loader) {
       if (opts?.useDraco) {
-        const dracoDecoderPath =
-          typeof opts.useDraco === 'string'
-            ? opts.useDraco
-            : 'https://www.gstatic.com/draco/versioned/decoders/1.4.3/'
-
-        const dracoLoader = new DRACOLoader().setDecoderPath(dracoDecoderPath)
-        loader.setDRACOLoader(dracoLoader)
+        if (typeof opts.useDraco === 'string' || typeof opts.useDraco === 'boolean') {
+          // default draco
+          const dracoLoader = useDefaultDracoLoader(
+            typeof opts.useDraco === 'string' ? opts.useDraco : undefined
+          )
+          loader.setDRACOLoader(dracoLoader)
+        } else {
+          // user's draco
+          loader.setDRACOLoader(opts.useDraco)
+        }
       }
 
       if (opts?.useMeshopt) {
