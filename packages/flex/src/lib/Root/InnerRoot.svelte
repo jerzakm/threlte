@@ -19,7 +19,11 @@
     plane?: FlexPlane
     direction?: keyof typeof Direction
     scaleFactor?: number
+  } & {
+    classParser?: (classes: string) => NodeProps
   }
+
+  export let classParser: $$Props['classParser'] = undefined
 
   export let yoga: Required<$$Props>['yoga']
   export let width: Required<$$Props>['width'] = 1
@@ -155,7 +159,8 @@
     crossAxis: currentWritable(plane[1] as Axis),
     depthAxis: currentWritable(getDepthAxis(plane)),
     rootGroup: rootGroup,
-    reflow
+    reflow,
+    classParser
   })
 
   const { mainAxis, crossAxis, depthAxis } = rootContext

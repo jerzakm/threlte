@@ -8,9 +8,11 @@
 
   type $$Props = NodeProps & {
     order?: number
+    cls?: string
   }
 
   export let order: $$Props['order'] = undefined
+  export let cls: $$Props['cls'] = undefined
 
   const {
     scaleFactor,
@@ -20,7 +22,8 @@
     updateNodeProps,
     mainAxis,
     crossAxis,
-    depthAxis
+    depthAxis,
+    classParser
   } = useRoot()
 
   export const group = new Group()
@@ -31,9 +34,11 @@
 
   export const { node } = createNodeContext(order)
 
+  $: parsedProps = classParser ? classParser(cls || '') : {}
+
   addNode(node, group, $$restProps as NodeProps, 'item')
-  updateNodeProps(node, $$restProps as NodeProps, true)
-  $: updateNodeProps(node, $$restProps as NodeProps)
+  updateNodeProps(node, { ...$$restProps, ...parsedProps } as NodeProps, true)
+  $: updateNodeProps(node, { ...$$restProps, ...parsedProps } as NodeProps)
   onDestroy(() => {
     removeNode(node)
   })

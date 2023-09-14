@@ -32,6 +32,7 @@ export type RootContextData = {
   rootWidth: CurrentWritable<number>
   rootHeight: CurrentWritable<number>
   reflow: (msg?: string) => void
+  classParser?: (classes: string) => NodeProps
 }
 
 export type RootContext = RootContextData &
